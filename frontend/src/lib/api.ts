@@ -47,7 +47,15 @@ async function pedir<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const resposta = await fetch(`${BASE_URL}${caminho}`, { ...opcoes, headers });
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${BASE_URL}${caminho}`, { ...opcoes, headers });
+  } catch {
+    // Falha de rede (servidor em baixo, sem ligação, CORS) — mensagem clara.
+    throw new Error(
+      "Não foi possível contactar o servidor. Verifique a sua ligação e tente novamente.",
+    );
+  }
 
   if (resposta.status === 204) return undefined as T;
 
