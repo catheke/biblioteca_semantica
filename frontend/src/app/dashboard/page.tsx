@@ -50,12 +50,12 @@ export default function PaginaDashboard() {
         Recomendado para si
       </h2>
       <p className="text-sm text-gray-500">
-        Sugestões baseadas nos seus interesses (via ontologia).
+        Sugestões baseadas nos seus interesses.
       </p>
       {recs.length === 0 ? (
         <p className="mt-4 text-gray-500">
-          Sem recomendações ainda. Guarde favoritos e carregue a ontologia no
-          Fuseki para ver sugestões inteligentes.
+          Ainda não há sugestões. Guarde obras nos favoritos para começar a
+          receber recomendações.
         </p>
       ) : (
         <ul className="mt-4 space-y-3">

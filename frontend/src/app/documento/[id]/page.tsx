@@ -143,12 +143,6 @@ export default function PaginaDetalhe() {
       {doc.resumo && (
         <p className="mt-8 leading-relaxed text-gray-700">{doc.resumo}</p>
       )}
-
-      {doc.uri_semantica && (
-        <p className="mt-6 break-all rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
-          Recurso semântico: {doc.uri_semantica}
-        </p>
-      )}
     </article>
   );
 }

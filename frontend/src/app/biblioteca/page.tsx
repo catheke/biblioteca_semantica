@@ -28,7 +28,6 @@ function obras(n: number): string {
 export default function PaginaBiblioteca() {
   const [seccoes, setSeccoes] = useState<SeccaoBiblioteca[]>([]);
   const [estado, setEstado] = useState<"carregando" | "ok" | "erro">("carregando");
-  const [erro, setErro] = useState("");
 
   // Estante aberta + género activo (só faz sentido na Literatura).
   const [activa, setActiva] = useState<SeccaoBiblioteca | null>(null);
@@ -45,8 +44,7 @@ export default function PaginaBiblioteca() {
         setSeccoes(s);
         setEstado("ok");
       })
-      .catch((e) => {
-        setErro(e.message);
+      .catch(() => {
         setEstado("erro");
       });
   }, []);
@@ -84,16 +82,13 @@ export default function PaginaBiblioteca() {
       <section className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-800">Biblioteca</h1>
         <p className="mt-1 max-w-2xl text-gray-500">
-          Arrumada por secções, como numa biblioteca real. A cota de cada estante
-          segue a CDU — a Classificação Decimal Universal usada nas bibliotecas de
-          Angola. Escolha uma estante para ver as obras.
+          Escolha uma secção para ver as obras.
         </p>
 
         {estado === "carregando" && <p className="mt-8 text-gray-500">A carregar…</p>}
         {estado === "erro" && (
           <div className="mt-8 rounded-lg bg-red-50 p-4 text-red-700">
-            Não foi possível carregar as secções. Verifique se a API está a correr.
-            ({erro})
+            Não foi possível carregar as secções. Tente novamente.
           </div>
         )}
 
