@@ -1,0 +1,160 @@
+# dados_exemplo.ttl — Instâncias (ABox) do BASI.
+# Enquanto basi.ttl define as classes e propriedades (TBox), este ficheiro
+# contém os indivíduos: pessoas, documentos, temas e as relações entre eles.
+# É carregado no Apache Jena Fuseki e é sobre estes dados que as consultas
+# SPARQL e a inferência operam. Os IRIs coincidem com o "uri_semantica" guardado
+# no PostgreSQL (database/seed.sql), garantindo a ligação SQL <-> RDF.
+
+@prefix basi: <http://basi.ao/ontologia#> .
+@prefix rec:  <http://basi.ao/recurso/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# 1) ÁREAS CIENTÍFICAS
+rec:area\/informatica a basi:AreaCientifica ; basi:nome "Informática" .
+rec:area\/medicina    a basi:AreaCientifica ; basi:nome "Medicina" .
+rec:area\/economia    a basi:AreaCientifica ; basi:nome "Economia" .
+
+# 2) Temas — hierarquia via basi:eSubtemaDe (transitiva)
+#    IA
+#    ├── Machine Learning
+#    │   ├── Deep Learning
+#    │   └── Redes Neurais
+#    ├── Ciência de Dados
+#    └── Visão Computacional
+#    Web Semântica (independente)
+#    Cardiologia (Medicina)
+
+basi:Tema_InteligenciaArtificial a basi:Tema ;
+    basi:nome "Inteligência Artificial" ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_MachineLearning a basi:Tema ;
+    basi:nome "Machine Learning" ;
+    basi:eSubtemaDe basi:Tema_InteligenciaArtificial ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_DeepLearning a basi:Tema ;
+    basi:nome "Deep Learning" ;
+    basi:eSubtemaDe basi:Tema_MachineLearning ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_RedesNeurais a basi:Tema ;
+    basi:nome "Redes Neurais" ;
+    basi:eSubtemaDe basi:Tema_MachineLearning ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_CienciaDeDados a basi:Tema ;
+    basi:nome "Ciência de Dados" ;
+    basi:eSubtemaDe basi:Tema_InteligenciaArtificial ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_VisaoComputacional a basi:Tema ;
+    basi:nome "Visão Computacional" ;
+    basi:eSubtemaDe basi:Tema_InteligenciaArtificial ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_WebSemantica a basi:Tema ;
+    basi:nome "Web Semântica" ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_Cardiologia a basi:Tema ;
+    basi:nome "Cardiologia" ;
+    basi:temaDaArea rec:area\/medicina .
+
+# 3) PALAVRAS-CHAVE
+basi:Palavra_Algoritmos a basi:PalavraChave ; basi:nome "algoritmos" .
+basi:Palavra_Python     a basi:PalavraChave ; basi:nome "python" .
+basi:Palavra_Ontologia  a basi:PalavraChave ; basi:nome "ontologia" .
+basi:Palavra_Sparql     a basi:PalavraChave ; basi:nome "sparql" .
+
+# 4) PESSOAS (Professores, Investigador, Estudante)
+rec:pessoa\/adriano a basi:Professor ;
+    basi:nome "Prof. Adriano Sigu" ;
+    basi:email "adriano@basi.ao" .
+
+rec:pessoa\/filipe a basi:Professor ;
+    basi:nome "Prof. Filipe Tchivela" ;
+    basi:email "filipe@basi.ao" .
+
+rec:pessoa\/pedro a basi:Investigador ;
+    basi:nome "Inv. Pedro Mendes" ;
+    basi:email "pedro@basi.ao" .
+
+rec:pessoa\/maria a basi:Estudante ;
+    basi:nome "Estudante Maria Sousa" ;
+    basi:email "maria@basi.ao" .
+
+# 5) DOCUMENTOS (instâncias) + relações de autoria, tema e área
+
+rec:documento\/doc1 a basi:Livro ;
+    basi:titulo "Introdução à Inteligência Artificial" ;
+    basi:resumo "Fundamentos de IA, agentes e procura." ;
+    basi:anoPublicacao "2023"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/adriano ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_InteligenciaArtificial ;
+    basi:temPalavraChave basi:Palavra_Algoritmos ;
+    basi:numDownloads 120 .
+
+rec:documento\/doc2 a basi:Artigo ;
+    basi:titulo "Aprendizagem Profunda Aplicada" ;
+    basi:resumo "Redes neuronais convolucionais e recorrentes." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/adriano ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_DeepLearning, basi:Tema_RedesNeurais ;
+    basi:temPalavraChave basi:Palavra_Python ;
+    basi:citaObra rec:documento\/doc1 ;
+    basi:numDownloads 95 .
+
+rec:documento\/doc3 a basi:Tese ;
+    basi:titulo "Web Semântica e Ontologias OWL" ;
+    basi:resumo "RDF, RDFS, OWL e inferência com SPARQL." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/filipe ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_WebSemantica ;
+    basi:temPalavraChave basi:Palavra_Ontologia, basi:Palavra_Sparql ;
+    basi:numDownloads 60 .
+
+rec:documento\/doc4 a basi:Manual ;
+    basi:titulo "Visão Computacional com Python" ;
+    basi:resumo "Processamento de imagem e detecção de objectos." ;
+    basi:anoPublicacao "2023"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/pedro ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_VisaoComputacional ;
+    basi:temPalavraChave basi:Palavra_Python ;
+    basi:numDownloads 80 .
+
+rec:documento\/doc5 a basi:Livro ;
+    basi:titulo "Fundamentos de Cardiologia" ;
+    basi:resumo "Anatomia e patologias cardíacas." ;
+    basi:anoPublicacao "2022"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/filipe ;
+    basi:pertenceAArea rec:area\/medicina ;
+    basi:temTema basi:Tema_Cardiologia ;
+    basi:numDownloads 45 .
+
+rec:documento\/doc6 a basi:MaterialDidactico ;
+    basi:titulo "Ciência de Dados para Iniciantes" ;
+    basi:resumo "Pipeline de dados, pandas e visualização." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/pedro ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_CienciaDeDados ;
+    basi:temPalavraChave basi:Palavra_Python ;
+    basi:numDownloads 150 .
+
+# Relação simétrica explícita (o raciocinador infere o sentido inverso).
+rec:documento\/doc2 basi:obraRelacionada rec:documento\/doc6 .
+
+# 6) REDE SOCIAL (seguir, favoritos)
+rec:pessoa\/maria basi:segue rec:pessoa\/adriano , rec:pessoa\/filipe .
+rec:pessoa\/pedro basi:segue rec:pessoa\/adriano .
+rec:pessoa\/maria basi:temFavorito rec:documento\/doc1 , rec:documento\/doc3 .
+rec:pessoa\/pedro basi:temFavorito rec:documento\/doc2 .
+
+# FIM DOS DADOS DE EXEMPLO

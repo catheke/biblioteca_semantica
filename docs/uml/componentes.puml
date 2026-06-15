@@ -1,0 +1,45 @@
+' =============================================================================
+' componentes.puml — Diagrama de Componentes / Implantação
+' Renderizar: plantuml componentes.puml  (ou extensão PlantUML no VS Code)
+' Mostra os contentores Docker e as ligações entre eles.
+' =============================================================================
+@startuml
+title Componentes / Implantação — Semantic Academic Hub (BASI)
+
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+actor "Utilizador\n(navegador)" as User
+
+node "Rede Docker privada" {
+
+  component "Frontend\nNext.js :3000" as FE
+
+  component "Backend\nFastAPI :8000" as BE {
+    component "API (routers)" as L_API
+    component "Services\n(negócio + semântica)" as L_SVC
+    component "Repositories" as L_REPO
+    component "Models (ORM)" as L_ORM
+  }
+
+  database "PostgreSQL\n:5432" as PG
+  database "Apache Jena Fuseki\n:3030 (RDF/OWL/SPARQL)" as FK
+  storage "MinIO (S3)\n:9000 / :9001" as MN
+}
+
+User --> FE : HTTPS
+FE --> L_API : REST / JSON
+
+L_API --> L_SVC
+L_SVC --> L_REPO
+L_REPO --> L_ORM
+L_ORM --> PG : SQL (identidade, metadados)
+
+L_SVC --> FK : SPARQL (pesquisa semântica,\nrecomendações, inferência)
+L_SVC --> MN : ficheiros (PDFs)
+
+note bottom of FK
+  Ligação SQL <-> RDF pelo campo
+  uri_semantica (IRI) em cada entidade.
+end note
+@enduml

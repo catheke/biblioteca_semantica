@@ -1,0 +1,44 @@
+# .gitignore — ficheiros que NÃO devem entrar no controlo de versões.
+
+# --- Python / Backend ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Node / Frontend ---
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# --- Variáveis de ambiente (NUNCA versionar segredos) ---
+.env
+.env.local
+.env.*.local
+
+# --- Dados de serviços (volumes locais) ---
+data/
+*.log
+
+# --- Base de dados local e ficheiros gerados pelo seed (regeneráveis) ---
+*.db
+backend/storage/livros/
+backend/storage/capas/
+
+# --- Grafo dinâmico gerado em tempo de execução ---
+rdf/dados_dinamicos.ttl
+
+# --- Sistema operativo / IDE ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

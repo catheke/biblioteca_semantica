@@ -1,0 +1,41 @@
+# =============================================================================
+# requirements.txt — Dependências Python do backend BASI
+# Versões fixadas (pinned) para builds reprodutíveis.
+# =============================================================================
+
+# --- Framework web e servidor ASGI ---
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# --- Validação e configuração (Pydantic v2) ---
+pydantic==2.7.4
+pydantic-settings==2.3.4
+email-validator==2.2.0
+
+# --- Base de dados relacional ---
+SQLAlchemy==2.0.31
+psycopg[binary]==3.2.1
+
+# --- Segurança / Autenticação (JWT + hashing de palavras-passe) ---
+# JWT em HS256 (HMAC) usa o backend nativo do python-jose (sem 'cryptography',
+# que exigiria compilar Rust + OpenSSL). Suficiente para tokens simétricos.
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.3
+python-multipart==0.0.9          # necessário para OAuth2 form / uploads
+
+# --- Web Semântica (SPARQL + RDF) ---
+SPARQLWrapper==2.0.0
+rdflib==7.0.0
+
+# --- Armazenamento de objectos (MinIO / S3) ---
+minio==7.2.7
+
+# --- Cliente HTTP ---
+httpx==0.27.0
+
+# --- Geração de PDF (livros de leitura) ---
+reportlab==4.5.1
+
+# --- Testes ---
+pytest==8.2.2

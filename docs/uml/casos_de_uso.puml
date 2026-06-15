@@ -1,0 +1,58 @@
+' =============================================================================
+' casos_de_uso.puml — Diagrama de Casos de Uso (PlantUML)
+' Renderizar: plantuml casos_de_uso.puml  (ou extensão PlantUML no VS Code)
+' =============================================================================
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+title Casos de Uso — Semantic Academic Hub (BASI)
+
+actor Visitante
+actor Estudante
+actor Professor
+actor Investigador
+actor Administrador
+
+' Herança de actores: todos os autenticados são, no mínimo, "Estudante".
+Estudante <|-- Professor
+Estudante <|-- Investigador
+
+rectangle "Plataforma BASI" {
+  usecase "Pesquisar conteúdos" as UC_Pesquisar
+  usecase "Pesquisa semântica" as UC_Semantica
+  usecase "Ver detalhe de documento" as UC_Ver
+  usecase "Registar / Iniciar sessão" as UC_Auth
+  usecase "Guardar favoritos" as UC_Fav
+  usecase "Seguir autores" as UC_Seguir
+  usecase "Receber recomendações" as UC_Rec
+  usecase "Publicar documento" as UC_Publicar
+  usecase "Criar linha de investigação" as UC_Linha
+  usecase "Gerir utilizadores" as UC_GerirUtil
+  usecase "Moderar conteúdos" as UC_Moderar
+  usecase "Gerir ontologia / áreas" as UC_GerirOnto
+  usecase "Consultar SPARQL" as UC_Sparql
+}
+
+Visitante --> UC_Pesquisar
+Visitante --> UC_Semantica
+Visitante --> UC_Ver
+Visitante --> UC_Auth
+
+Estudante --> UC_Fav
+Estudante --> UC_Seguir
+Estudante --> UC_Rec
+
+Professor --> UC_Publicar
+Professor --> UC_Sparql
+Investigador --> UC_Publicar
+Investigador --> UC_Linha
+Investigador --> UC_Sparql
+
+Administrador --> UC_GerirUtil
+Administrador --> UC_Moderar
+Administrador --> UC_GerirOnto
+Administrador --> UC_Sparql
+
+UC_Semantica .> UC_Pesquisar : <<extend>>
+UC_Rec .> UC_Semantica : <<include>>
+@enduml

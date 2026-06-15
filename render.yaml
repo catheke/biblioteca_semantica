@@ -1,0 +1,86 @@
+# render.yaml — Blueprint de implantação do BASI no Render.
+# Cria, num único repositório, quatro componentes: base de dados PostgreSQL,
+# Apache Jena Fuseki (grafo RDF), backend FastAPI e frontend Next.js.
+#
+# Como usar: ver DEPLOY.md. Em resumo: empurrar este repositório para o GitHub,
+# em https://dashboard.render.com escolher "New +" > "Blueprint" e apontar para
+# o repositório. O Render lê este ficheiro e cria tudo.
+#
+# Nota sobre o plano gratuito: os serviços "adormecem" após ~15 min sem tráfego
+# e o disco do Fuseki é efémero. O backend volta a carregar a ontologia no
+# arranque (BOOTSTRAP_ON_STARTUP=1), por isso o grafo é reconstruído. Os dados
+# relacionais ficam guardados no PostsgreSQL (persistente). Para persistência
+# total do grafo, associar um disco pago ao Fuseki.
+
+databases:
+  - name: basi-db
+    databaseName: basi
+    user: basi
+    plan: free
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1) Apache Jena Fuseki — grafo RDF + SPARQL (imagem pública)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: basi-fuseki
+    runtime: image
+    plan: free
+    image:
+      url: docker.io/stain/jena-fuseki:4.10.0
+    envVars:
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      # Cria automaticamente um dataset persistente (TDB2) chamado "basi".
+      - key: FUSEKI_DATASET_1
+        value: basi
+
+  # ---------------------------------------------------------------------------
+  # 2) Backend — API FastAPI (build a partir da raiz do repositório)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: basi-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      # Semeia a BD e carrega a ontologia no Fuseki no primeiro arranque.
+      - key: BOOTSTRAP_ON_STARTUP
+        value: "1"
+      # URL do PostgreSQL gerido (o config.py normaliza o esquema para psycopg).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: basi-db
+          property: connectionString
+      # Chave JWT forte gerada pelo Render.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # Endpoints do Fuseki e CORS: preencher na consola depois de saber os URLs
+      # públicos dos serviços basi-fuseki e basi-frontend (ver DEPLOY.md).
+      - key: FUSEKI_QUERY_ENDPOINT
+        sync: false
+      - key: FUSEKI_UPDATE_ENDPOINT
+        sync: false
+      - key: FUSEKI_DATA_ENDPOINT
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # 3) Frontend — Next.js
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: basi-frontend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      # O Next.js inlina este valor no BUILD; o Render passa-o como build-arg.
+      # Preencher com o URL público do backend + /api/v1 (ver DEPLOY.md).
+      - key: NEXT_PUBLIC_API_URL
+        sync: false

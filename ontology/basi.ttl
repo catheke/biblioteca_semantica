@@ -1,0 +1,281 @@
+# basi.ttl — Ontologia do BASI (Biblioteca Académica Semântica Integrada).
+# Serialização Turtle. Define as classes do domínio (Pessoa, Documento, Tema,
+# AreaCientifica...), as suas relações e os axiomas OWL (propriedades inversas,
+# simétricas, transitivas e restrições). É esta camada que permite a pesquisa
+# por temas relacionados: procurar "Inteligência Artificial" encontra também
+# Machine Learning e Deep Learning, declarados como subtemas.
+
+# Prefixos
+
+@prefix :        <http://basi.ao/ontologia#> .
+@prefix basi:    <http://basi.ao/ontologia#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+
+# Cabeçalho da ontologia
+<http://basi.ao/ontologia>
+    a owl:Ontology ;
+    dc:title "Ontologia do Semantic Academic Hub (BASI)"@pt ;
+    dc:creator "Pedro Calenga, Filipe Tchivela, Adriano De Júlio"@pt ;
+    dc:description "Ontologia que modela uma rede académica semântica: pessoas, documentos, áreas científicas, temas e as relações que permitem recomendações inteligentes."@pt ;
+    owl:versionInfo "1.0.0" .
+
+# 1) CLASSES e HIERARQUIA (rdfs:subClassOf)
+
+# ---- Pessoas -----------------------------------------------------------------
+# Pessoa é a superclasse. Autor é uma Pessoa que produz documentos.
+# Professor, Estudante e Investigador são tipos de Pessoa (e de Autor quando
+# publicam). Usamos subClassOf para que tudo o que vale para Pessoa valha para
+# os subtipos (princípio da herança).
+basi:Pessoa a owl:Class ;
+    rdfs:label "Pessoa"@pt ;
+    rdfs:comment "Qualquer ser humano registado na plataforma."@pt ;
+    rdfs:subClassOf foaf:Person .
+
+basi:Autor a owl:Class ;
+    rdfs:label "Autor"@pt ;
+    rdfs:comment "Pessoa que é responsável por pelo menos um documento."@pt ;
+    rdfs:subClassOf basi:Pessoa .
+
+basi:Professor a owl:Class ;
+    rdfs:label "Professor"@pt ;
+    rdfs:subClassOf basi:Autor .
+
+basi:Estudante a owl:Class ;
+    rdfs:label "Estudante"@pt ;
+    rdfs:subClassOf basi:Pessoa .
+
+basi:Investigador a owl:Class ;
+    rdfs:label "Investigador"@pt ;
+    rdfs:subClassOf basi:Autor .
+
+# ---- Documentos --------------------------------------------------------------
+# Documento é a superclasse de todos os materiais publicáveis.
+basi:Documento a owl:Class ;
+    rdfs:label "Documento"@pt ;
+    rdfs:comment "Material académico publicável (obra intelectual)."@pt .
+
+basi:Livro              a owl:Class ; rdfs:label "Livro"@pt              ; rdfs:subClassOf basi:Documento .
+basi:Artigo            a owl:Class ; rdfs:label "Artigo Científico"@pt ; rdfs:subClassOf basi:Documento .
+basi:Tese             a owl:Class ; rdfs:label "Tese"@pt              ; rdfs:subClassOf basi:Documento .
+basi:Monografia        a owl:Class ; rdfs:label "Monografia"@pt        ; rdfs:subClassOf basi:Documento .
+basi:Manual            a owl:Class ; rdfs:label "Manual"@pt            ; rdfs:subClassOf basi:Documento .
+basi:Apresentacao      a owl:Class ; rdfs:label "Apresentação"@pt      ; rdfs:subClassOf basi:Documento .
+basi:MaterialDidactico a owl:Class ; rdfs:label "Material Didáctico"@pt ; rdfs:subClassOf basi:Documento .
+
+# ---- Estrutura académica -----------------------------------------------------
+basi:Universidade  a owl:Class ; rdfs:label "Universidade"@pt .
+basi:Departamento  a owl:Class ; rdfs:label "Departamento"@pt .
+basi:Curso         a owl:Class ; rdfs:label "Curso"@pt .
+basi:EventoCientifico a owl:Class ; rdfs:label "Evento Científico"@pt .
+
+# ---- Conhecimento (taxonomia de assuntos) ------------------------------------
+basi:AreaCientifica a owl:Class ;
+    rdfs:label "Área Científica"@pt ;
+    rdfs:comment "Secção da biblioteca = classe da CDU (ex.: 0 Informática, 82 Literatura)."@pt ;
+    rdfs:subClassOf skos:Concept .
+
+basi:Genero a owl:Class ;
+    rdfs:label "Género Literário"@pt ;
+    rdfs:comment "Subdivisão da Literatura por forma (Romance, Conto, Poesia, Teatro), segundo os auxiliares de forma da CDU."@pt ;
+    rdfs:subClassOf skos:Concept .
+
+basi:Tema a owl:Class ;
+    rdfs:label "Tema"@pt ;
+    rdfs:comment "Assunto de investigação (ex.: Inteligência Artificial)."@pt ;
+    rdfs:subClassOf skos:Concept .
+
+basi:PalavraChave a owl:Class ;
+    rdfs:label "Palavra-Chave"@pt ;
+    rdfs:subClassOf skos:Concept .
+
+# Classes disjuntas: um indivíduo não pode ser, ao mesmo tempo, Livro e Tese.
+# Isto ajuda o raciocinador a detectar inconsistências.
+[] a owl:AllDisjointClasses ;
+   owl:members ( basi:Livro basi:Artigo basi:Tese basi:Monografia
+                 basi:Manual basi:Apresentacao basi:MaterialDidactico ) .
+
+# 2) OBJECT PROPERTIES (relações entre indivíduos)
+
+# ---- Autoria -----------------------------------------------------------------
+# temAutor liga um Documento ao seu Autor. A sua INVERSA, ehAutorDe, liga o
+# Autor aos seus Documentos. Declarar a inversa permite ao raciocinador
+# "navegar" a relação nos dois sentidos sem termos de escrever ambas.
+basi:temAutor a owl:ObjectProperty ;
+    rdfs:label "tem autor"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:Autor ;
+    owl:inverseOf basi:ehAutorDe .
+
+basi:ehAutorDe a owl:ObjectProperty ;
+    rdfs:label "é autor de"@pt ;
+    rdfs:domain basi:Autor ;
+    rdfs:range  basi:Documento .
+
+# ---- Classificação temática --------------------------------------------------
+basi:temTema a owl:ObjectProperty ;
+    rdfs:label "tem tema"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:Tema .
+
+basi:pertenceAArea a owl:ObjectProperty ;
+    rdfs:label "pertence à área"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:AreaCientifica .
+
+# Liga uma obra de Literatura ao seu género (Romance, Conto, Poesia, Teatro).
+basi:temGenero a owl:ObjectProperty ;
+    rdfs:label "tem género"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:Genero .
+
+basi:temPalavraChave a owl:ObjectProperty ;
+    rdfs:label "tem palavra-chave"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:PalavraChave .
+
+# ---- Hierarquia de temas (a CHAVE da pesquisa inteligente) -------------------
+# eSubtemaDe é TRANSITIVA: se DeepLearning é subtema de MachineLearning, e
+# MachineLearning é subtema de InteligenciaArtificial, então o raciocinador
+# infere que DeepLearning é subtema de InteligenciaArtificial. É isto que
+# permite expandir "IA" para todos os seus descendentes.
+basi:eSubtemaDe a owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:label "é subtema de"@pt ;
+    rdfs:domain basi:Tema ;
+    rdfs:range  basi:Tema ;
+    rdfs:comment "Relação hierárquica transitiva entre temas."@pt .
+
+# Um Tema também pode pertencer a uma Área.
+basi:temaDaArea a owl:ObjectProperty ;
+    rdfs:label "tema da área"@pt ;
+    rdfs:domain basi:Tema ;
+    rdfs:range  basi:AreaCientifica .
+
+# ---- Relações entre documentos (recomendação) --------------------------------
+# obraRelacionada é SIMÉTRICA: se A está relacionada com B, então B está
+# relacionada com A. O raciocinador completa o par automaticamente.
+basi:obraRelacionada a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:label "obra relacionada"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:Documento .
+
+# citaObra: um documento cita outro (não simétrico).
+basi:citaObra a owl:ObjectProperty ;
+    rdfs:label "cita obra"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  basi:Documento .
+
+# ---- Rede social / académica -------------------------------------------------
+basi:segue a owl:ObjectProperty ;
+    rdfs:label "segue"@pt ;
+    rdfs:domain basi:Pessoa ;
+    rdfs:range  basi:Pessoa .
+
+basi:temFavorito a owl:ObjectProperty ;
+    rdfs:label "tem favorito"@pt ;
+    rdfs:domain basi:Pessoa ;
+    rdfs:range  basi:Documento .
+
+# ---- Estrutura académica -----------------------------------------------------
+basi:leccionaCurso a owl:ObjectProperty ;
+    rdfs:label "lecciona curso"@pt ;
+    rdfs:domain basi:Professor ;
+    rdfs:range  basi:Curso .
+
+basi:pertenceADepartamento a owl:ObjectProperty ;
+    rdfs:label "pertence ao departamento"@pt ;
+    rdfs:domain basi:Curso ;
+    rdfs:range  basi:Departamento .
+
+basi:departamentoDe a owl:ObjectProperty ;
+    rdfs:label "departamento de"@pt ;
+    rdfs:domain basi:Departamento ;
+    rdfs:range  basi:Universidade .
+
+# 3) DATA PROPERTIES (atributos literais)
+
+basi:titulo a owl:DatatypeProperty ;
+    rdfs:label "título"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  xsd:string .
+
+basi:resumo a owl:DatatypeProperty ;
+    rdfs:label "resumo"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  xsd:string .
+
+basi:anoPublicacao a owl:DatatypeProperty ;
+    rdfs:label "ano de publicação"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  xsd:gYear .
+
+basi:nome a owl:DatatypeProperty ;
+    rdfs:label "nome"@pt ;
+    rdfs:domain basi:Pessoa ;
+    rdfs:range  xsd:string .
+
+basi:email a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "email"@pt ;
+    rdfs:domain basi:Pessoa ;
+    rdfs:range  xsd:string ;
+    rdfs:comment "Funcional: cada pessoa tem no máximo um email."@pt .
+
+basi:numDownloads a owl:DatatypeProperty ;
+    rdfs:label "número de downloads"@pt ;
+    rdfs:domain basi:Documento ;
+    rdfs:range  xsd:integer .
+
+# 4) RESTRIÇÕES OWL (axiomas que habilitam INFERÊNCIA)
+
+# (a) DEFINIÇÃO DE "Autor" POR RESTRIÇÃO:
+#     Qualquer Documento tem de ter pelo menos um autor (cardinalidade mínima 1).
+#     Modelamos isto como restrição na classe Documento.
+basi:Documento rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty basi:temAutor ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# (b) CLASSE DEFINIDA "DocumentoDeIA":
+#     Um documento é automaticamente classificado como DocumentoDeIA SE tiver
+#     o tema basi:InteligenciaArtificial OU qualquer subtema deste. Como
+#     eSubtemaDe é transitiva, o raciocinador apanha toda a sub-árvore.
+#     -> Esta é a materialização formal do exemplo do enunciado.
+basi:DocumentoDeIA a owl:Class ;
+    rdfs:label "Documento de Inteligência Artificial"@pt ;
+    rdfs:comment "Classe inferida: documentos cujo tema é IA ou um subtema de IA."@pt ;
+    owl:equivalentClass [
+        a owl:Restriction ;
+        owl:onProperty basi:temTema ;
+        owl:someValuesFrom [
+            a owl:Class ;
+            owl:unionOf (
+                basi:Tema_InteligenciaArtificial
+                basi:Tema_MachineLearning
+                basi:Tema_DeepLearning
+                basi:Tema_RedesNeurais
+                basi:Tema_CienciaDeDados
+                basi:Tema_VisaoComputacional
+            )
+        ]
+    ] .
+
+# (c) "ProfessorActivo": professor que é autor de pelo menos um documento.
+basi:ProfessorActivo a owl:Class ;
+    rdfs:label "Professor Activo"@pt ;
+    owl:equivalentClass [
+        a owl:Class ;
+        owl:intersectionOf (
+            basi:Professor
+            [ a owl:Restriction ;
+              owl:onProperty basi:ehAutorDe ;
+              owl:minCardinality "1"^^xsd:nonNegativeInteger ]
+        )
+    ] .
+
+# FIM DA ONTOLOGIA (TBox). As INSTÂNCIAS (ABox) estão em rdf/dados_exemplo.ttl

@@ -1,0 +1,144 @@
+' =============================================================================
+' classes.puml — Diagrama de Classes (modelo de domínio / ORM)
+' Renderizar: plantuml classes.puml  (ou extensão PlantUML no VS Code)
+' Mostra as entidades principais do backend e as suas relações.
+' =============================================================================
+@startuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+title Diagrama de Classes — Semantic Academic Hub (BASI)
+
+' --- Enumerações ------------------------------------------------------------
+enum PerfilUtilizador {
+  ADMINISTRADOR
+  PROFESSOR
+  ESTUDANTE
+  INVESTIGADOR
+  VISITANTE
+}
+
+enum TipoDocumento {
+  LIVRO
+  ARTIGO
+  TESE
+  MONOGRAFIA
+  MANUAL
+  APRESENTACAO
+  MATERIAL_DIDACTICO
+}
+
+enum EstadoDocumento {
+  RASCUNHO
+  PUBLICADO
+  ARQUIVADO
+}
+
+' --- Identidade -------------------------------------------------------------
+class Utilizador {
+  +id: int
+  +nome: str
+  +email: str
+  +palavra_passe_hash: str
+  +perfil: PerfilUtilizador
+  +bio: str
+  +uri_semantica: str
+  +criado_em: datetime
+}
+
+class TokenRefresh {
+  +id: int
+  +utilizador_id: int
+  +token: str
+  +revogado: bool
+  +expira_em: datetime
+}
+
+' --- Estrutura académica ----------------------------------------------------
+class AreaCientifica {
+  +id: int
+  +nome: str
+  +descricao: str
+  +uri_semantica: str
+}
+
+class Tema {
+  +id: int
+  +nome: str
+  +tema_pai_id: int
+  +area_id: int
+  +uri_semantica: str
+}
+
+class PalavraChave {
+  +id: int
+  +termo: str
+}
+
+class Universidade {
+  +id: int
+  +nome: str
+  +sigla: str
+}
+
+class Departamento {
+  +id: int
+  +nome: str
+  +universidade_id: int
+}
+
+class Curso {
+  +id: int
+  +nome: str
+  +departamento_id: int
+}
+
+' --- Documentos -------------------------------------------------------------
+class Documento {
+  +id: int
+  +titulo: str
+  +resumo: str
+  +tipo: TipoDocumento
+  +estado: EstadoDocumento
+  +ano_publicacao: int
+  +ficheiro_url: str
+  +num_visualizacoes: int
+  +num_downloads: int
+  +uri_semantica: str
+  +autor_id: int
+  +area_id: int
+}
+
+' --- Social -----------------------------------------------------------------
+class Favorito {
+  +utilizador_id: int
+  +documento_id: int
+  +criado_em: datetime
+}
+
+class Seguidor {
+  +seguidor_id: int
+  +seguido_id: int
+  +criado_em: datetime
+}
+
+' --- Relações ---------------------------------------------------------------
+Utilizador "1" --> "0..*" Documento : publica >
+Utilizador "1" --> "0..*" TokenRefresh : possui >
+Utilizador "1" --> "0..*" Favorito
+Utilizador "1" --> "0..*" Seguidor : segue >
+
+Documento "0..*" --> "1" AreaCientifica
+Documento "0..*" --> "0..*" Tema : temTema >
+Documento "0..*" --> "0..*" PalavraChave
+Documento "1" --> "0..*" Favorito
+
+Tema "0..*" --> "0..1" Tema : eSubtemaDe >
+Tema "0..*" --> "1" AreaCientifica
+
+Universidade "1" --> "0..*" Departamento
+Departamento "1" --> "0..*" Curso
+
+Utilizador ..> PerfilUtilizador
+Documento ..> TipoDocumento
+Documento ..> EstadoDocumento
+@enduml

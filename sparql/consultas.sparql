@@ -1,0 +1,344 @@
+###############################################################################
+# consultas.sparql — BIBLIOTECA DE CONSULTAS SPARQL do BASI
+# -----------------------------------------------------------------------------
+# Conjunto de 22 consultas profissionais sobre o grafo RDF (Apache Jena Fuseki).
+# Cada consulta tem um cabeçalho explicativo: O QUE faz, PORQUÊ e que conceito
+# de Web Semântica demonstra.
+#
+# COMO EXECUTAR:
+#   - Interface web do Fuseki:  http://localhost:3030  -> dataset "basi" -> Query
+#   - Ou via API do BASI:       POST /api/v1/sparql  { "query": "..." }
+#
+# PREFIXOS comuns (repetir no topo de cada consulta executada isoladamente):
+#   PREFIX basi: <http://basi.ao/ontologia#>
+#   PREFIX rec:  <http://basi.ao/recurso/>
+#   PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+###############################################################################
+
+# =============================================================================
+# [01] LIVROS POR ÁREA CIENTÍFICA
+# O quê: lista todos os documentos da área "Informática".
+# Conceito: filtragem por propriedade de objecto (pertenceAArea).
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?documento ?titulo
+WHERE {
+  ?documento basi:pertenceAArea rec:area\/informatica ;
+             basi:titulo ?titulo .
+}
+ORDER BY ?titulo
+;
+
+# =============================================================================
+# [02] PROFESSORES E OS SEUS DOCUMENTOS
+# O quê: para cada professor, mostra os títulos que publicou.
+# Conceito: navegação por classe (rdf:type) + propriedade temAutor.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?nomeProfessor ?titulo
+WHERE {
+  ?prof  a basi:Professor ;
+         basi:nome ?nomeProfessor .
+  ?doc   basi:temAutor ?prof ;
+         basi:titulo ?titulo .
+}
+ORDER BY ?nomeProfessor
+;
+
+# =============================================================================
+# [03] *** PESQUISA INTELIGENTE *** — DOCUMENTOS SOBRE IA E TODOS OS SUBTEMAS
+# O quê: encontra documentos sobre "Inteligência Artificial" E sobre qualquer
+#        subtema (Machine Learning, Deep Learning, Redes Neurais...), mesmo que
+#        a palavra "IA" não apareça no documento.
+# Conceito: propriedade TRANSITIVA via caminho de propriedade `basi:eSubtemaDe*`
+#        (o `*` significa "zero ou mais saltos"). É o coração do diferencial
+#        semântico do projecto.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT DISTINCT ?titulo ?nomeTema
+WHERE {
+  ?tema basi:eSubtemaDe* basi:Tema_InteligenciaArtificial ;
+        basi:nome ?nomeTema .
+  ?doc  basi:temTema ?tema ;
+        basi:titulo ?titulo .
+}
+ORDER BY ?titulo
+;
+
+# =============================================================================
+# [04] TRABALHOS RELACIONADOS (relação simétrica)
+# O quê: dado o doc2, lista as obras relacionadas.
+# Conceito: owl:SymmetricProperty — o motor encontra a relação nos dois sentidos
+#        se a inferência estiver activa.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?relacionado ?titulo
+WHERE {
+  rec:documento\/doc2 basi:obraRelacionada ?relacionado .
+  ?relacionado basi:titulo ?titulo .
+}
+;
+
+# =============================================================================
+# [05] TESES RELACIONADAS POR ÁREA
+# O quê: teses da mesma área de uma tese dada (doc3).
+# Conceito: auto-junção (self-join) no grafo + filtro por tipo Tese.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?outraTese ?titulo
+WHERE {
+  rec:documento\/doc3 basi:pertenceAArea ?area .
+  ?outraTese a basi:Tese ;
+             basi:pertenceAArea ?area ;
+             basi:titulo ?titulo .
+  FILTER (?outraTese != rec:documento\/doc3)
+}
+;
+
+# =============================================================================
+# [06] RECOMENDAÇÕES INTELIGENTES PARA UM UTILIZADOR
+# O quê: recomenda documentos relacionados com os favoritos de um utilizador
+#        (maria), excluindo os que já tem.
+# Conceito: percurso favorito -> tema -> SUBTEMAS (transitivo `eSubtemaDe*`) ->
+#        documentos. Um favorito sobre "IA" recomenda obras dos seus subtemas
+#        (Deep Learning, Visão Computacional...). É a inferência da pesquisa
+#        semântica aplicada à recomendação. (Espelha recommendation_service.py.)
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT DISTINCT ?recomendado ?titulo
+WHERE {
+  rec:pessoa\/maria basi:temFavorito ?favorito .
+  ?favorito    basi:temTema ?temaFav .
+  ?tema        basi:eSubtemaDe* ?temaFav .
+  ?recomendado basi:temTema ?tema ;
+               basi:titulo ?titulo .
+  FILTER NOT EXISTS { rec:pessoa\/maria basi:temFavorito ?recomendado }
+}
+;
+
+# =============================================================================
+# [07] AUTORES MAIS ACTIVOS (contagem de publicações)
+# O quê: ranking de autores pelo número de documentos.
+# Conceito: agregação COUNT + GROUP BY + ORDER BY DESC.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?nomeAutor (COUNT(?doc) AS ?total)
+WHERE {
+  ?doc basi:temAutor ?autor .
+  ?autor basi:nome ?nomeAutor .
+}
+GROUP BY ?nomeAutor
+ORDER BY DESC(?total)
+;
+
+# =============================================================================
+# [08] DOCUMENTOS MAIS DESCARREGADOS (top 5)
+# Conceito: ordenação por data property numérica + LIMIT.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?titulo ?downloads
+WHERE {
+  ?doc basi:titulo ?titulo ;
+       basi:numDownloads ?downloads .
+}
+ORDER BY DESC(?downloads)
+LIMIT 5
+;
+
+# =============================================================================
+# [09] CONTAGEM DE DOCUMENTOS POR TIPO
+# Conceito: agregação por classe usando rdf:type.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?tipo (COUNT(?doc) AS ?total)
+WHERE {
+  ?doc a basi:Documento ;
+       a ?tipo .
+  FILTER (?tipo != basi:Documento)
+}
+GROUP BY ?tipo
+ORDER BY DESC(?total)
+;
+
+# =============================================================================
+# [10] TEMAS E O SEU TEMA-PAI (hierarquia directa)
+# Conceito: leitura da relação eSubtemaDe (um salto).
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?nomeTema ?nomePai
+WHERE {
+  ?tema basi:eSubtemaDe ?pai ;
+        basi:nome ?nomeTema .
+  ?pai  basi:nome ?nomePai .
+}
+;
+
+# =============================================================================
+# [11] ÁRVORE COMPLETA DE SUBTEMAS DE UM TEMA
+# O quê: todos os descendentes (directos e indirectos) de "Machine Learning".
+# Conceito: caminho de propriedade inverso/transitivo `^basi:eSubtemaDe+`.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?nomeDescendente
+WHERE {
+  ?descendente basi:eSubtemaDe+ basi:Tema_MachineLearning ;
+               basi:nome ?nomeDescendente .
+}
+;
+
+# =============================================================================
+# [12] DOCUMENTOS DE UM AUTOR ESPECÍFICO (pela inversa)
+# Conceito: owl:inverseOf — usar ehAutorDe a partir da pessoa.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?titulo
+WHERE {
+  rec:pessoa\/adriano basi:ehAutorDe ?doc .
+  ?doc basi:titulo ?titulo .
+}
+;
+
+# =============================================================================
+# [13] CO-OCORRÊNCIA DE TEMAS (temas que aparecem juntos no mesmo documento)
+# Conceito: detectar relações latentes entre temas — útil para recomendação.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?temaA ?temaB (COUNT(?doc) AS ?juntos)
+WHERE {
+  ?doc basi:temTema ?ta , ?tb .
+  ?ta basi:nome ?temaA .
+  ?tb basi:nome ?temaB .
+  FILTER (STR(?temaA) < STR(?temaB))
+}
+GROUP BY ?temaA ?temaB
+ORDER BY DESC(?juntos)
+;
+
+# =============================================================================
+# [14] DOCUMENTOS QUE CITAM UMA OBRA (rede de citações)
+# Conceito: navegar a propriedade citaObra.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?citante ?titulo
+WHERE {
+  ?citante basi:citaObra rec:documento\/doc1 ;
+           basi:titulo ?titulo .
+}
+;
+
+# =============================================================================
+# [15] QUEM SEGUE UM PROFESSOR
+# Conceito: rede social — propriedade segue.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT ?nomeSeguidor
+WHERE {
+  ?seguidor basi:segue rec:pessoa\/adriano ;
+            basi:nome ?nomeSeguidor .
+}
+;
+
+# =============================================================================
+# [16] RECOMENDAR PESSOAS A SEGUIR (amigos de amigos)
+# O quê: sugere a 'maria' pessoas seguidas por quem ela já segue.
+# Conceito: caminho de duas etapas `basi:segue/basi:segue`.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+SELECT DISTINCT ?nomeSugerido
+WHERE {
+  rec:pessoa\/maria basi:segue/basi:segue ?sugerido .
+  ?sugerido basi:nome ?nomeSugerido .
+  FILTER (?sugerido != rec:pessoa\/maria)
+  FILTER NOT EXISTS { rec:pessoa\/maria basi:segue ?sugerido }
+}
+;
+
+# =============================================================================
+# [17] DOCUMENTOS POR ANO DE PUBLICAÇÃO (linha temporal)
+# Conceito: agregação por data property gYear.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?ano (COUNT(?doc) AS ?total)
+WHERE {
+  ?doc basi:anoPublicacao ?ano .
+}
+GROUP BY ?ano
+ORDER BY ?ano
+;
+
+# =============================================================================
+# [18] PESQUISA TEXTUAL POR PALAVRA NO TÍTULO (filtro com regex)
+# Conceito: FILTER + regex case-insensitive sobre literais.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?titulo
+WHERE {
+  ?doc basi:titulo ?titulo .
+  FILTER regex(?titulo, "python", "i")
+}
+;
+
+# =============================================================================
+# [19] ÁREAS E O SEU NÚMERO DE TEMAS
+# Conceito: agregação a partir de temaDaArea.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?nomeArea (COUNT(?tema) AS ?numTemas)
+WHERE {
+  ?tema basi:temaDaArea ?area .
+  ?area basi:nome ?nomeArea .
+}
+GROUP BY ?nomeArea
+ORDER BY DESC(?numTemas)
+;
+
+# =============================================================================
+# [20] DOCUMENTOS SEM PALAVRAS-CHAVE (qualidade de metadados)
+# Conceito: NOT EXISTS para encontrar lacunas nos dados.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+SELECT ?titulo
+WHERE {
+  ?doc a basi:Documento ;
+       basi:titulo ?titulo .
+  FILTER NOT EXISTS { ?doc basi:temPalavraChave ?p }
+}
+;
+
+# =============================================================================
+# [21] CONSTRUIR UM SUB-GRAFO (CONSTRUCT) — exportar autoria como novo grafo
+# Conceito: CONSTRUCT devolve TRIPLOS (não uma tabela). Útil para integração.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+CONSTRUCT {
+  ?autor basi:ehAutorDe ?doc .
+}
+WHERE {
+  ?doc basi:temAutor ?autor .
+}
+;
+
+# =============================================================================
+# [22] PERGUNTA SIM/NÃO (ASK) — existe alguma tese em Informática?
+# Conceito: forma de consulta ASK, devolve booleano.
+# =============================================================================
+PREFIX basi: <http://basi.ao/ontologia#>
+PREFIX rec:  <http://basi.ao/recurso/>
+ASK {
+  ?t a basi:Tese ;
+     basi:pertenceAArea rec:area\/informatica .
+}
+;
+###############################################################################
+# FIM DAS CONSULTAS
+###############################################################################

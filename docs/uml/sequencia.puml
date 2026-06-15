@@ -1,0 +1,56 @@
+' =============================================================================
+' sequencia.puml — Diagrama de Sequência da PESQUISA SEMÂNTICA
+' Renderizar: plantuml sequencia.puml  (ou extensão PlantUML no VS Code)
+' Mostra o caso de uso central: pesquisa que "compreende" relações via inferência.
+' =============================================================================
+@startuml
+title Sequência — Pesquisa Semântica ("Inteligência Artificial")
+
+actor Utilizador
+participant "Frontend\n(Next.js)" as FE
+participant "API\n(routes_semantic)" as API
+participant "SemanticService" as SS
+database "Fuseki\n(SPARQL/OWL)" as FK
+
+Utilizador -> FE : escreve "Inteligência Artificial"
+activate FE
+FE -> API : GET /api/v1/semantic-search?q=...
+activate API
+
+API -> SS : pesquisar_documentos_por_tema("Inteligência Artificial")
+activate SS
+
+note right of SS
+  Constrói SPARQL com caminho
+  transitivo:  ?tema basi:eSubtemaDe* ?raiz
+end note
+
+SS -> FK : SPARQL SELECT (expandir termo)
+activate FK
+note right of FK
+  Inferência sobre a ontologia:
+  IA → Machine Learning → Deep Learning,
+  Redes Neurais, Ciência de Dados, ...
+end note
+FK --> SS : termos expandidos
+deactivate FK
+
+SS -> FK : SPARQL SELECT (documentos desses temas)
+activate FK
+FK --> SS : URIs + títulos dos documentos
+deactivate FK
+
+SS --> API : resultados + termos_expandidos
+deactivate SS
+
+API --> FE : JSON { resultados, termos_expandidos }
+deactivate API
+
+FE -> Utilizador : cartões de documentos\n+ termos relacionados (transparência)
+deactivate FE
+
+note over FE, FK
+  Se o Fuseki estiver indisponível, o SemanticService
+  devolve [] (degradação graciosa) e a API mantém-se de pé.
+end note
+@enduml

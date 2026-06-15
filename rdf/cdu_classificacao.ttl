@@ -1,0 +1,95 @@
+# cdu_classificacao.ttl — A CDU (Classificação Decimal Universal) em SKOS.
+# Descreve as secções da biblioteca (classes da CDU) e, dentro da Literatura, os
+# géneros. Está modelado como um skos:ConceptScheme: cada secção/género é um
+# skos:Concept e skos:broader liga cada género à secção de Literatura.
+# O IRI de cada secção coincide com o `uri_semantica` em PostgreSQL (tabela
+# areas_cientificas, ver app/seed_local.py) e o `basi:nome` com o nome da secção,
+# de modo a que os documentos do admin se liguem à área e ao género certos.
+
+@prefix basi: <http://basi.ao/ontologia#> .
+@prefix rec:  <http://basi.ao/recurso/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# 1) O ESQUEMA DE CONCEITOS (o próprio sistema CDU)
+rec:esquema\/cdu a skos:ConceptScheme ;
+    skos:prefLabel "Classificação Decimal Universal (CDU)"@pt ;
+    skos:notation "CDU" ;
+    rdfs:comment "Norma de classificação bibliográfica usada em Angola e Portugal."@pt .
+
+# 2) SECÇÕES — as classes da CDU usadas nas estantes da biblioteca
+#    Cada secção é, ao mesmo tempo, um conceito SKOS e uma basi:AreaCientifica
+#    (a entidade que a aplicação já usa para arrumar os documentos).
+rec:cdu\/0 a skos:Concept, basi:AreaCientifica ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:topConceptOf rec:esquema\/cdu ;
+    skos:notation "0" ;
+    skos:prefLabel "Informática e Generalidades"@pt ;
+    basi:nome "Informática e Generalidades" .
+
+rec:cdu\/1 a skos:Concept, basi:AreaCientifica ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:topConceptOf rec:esquema\/cdu ;
+    skos:notation "1" ;
+    skos:prefLabel "Filosofia e Psicologia"@pt ;
+    basi:nome "Filosofia e Psicologia" .
+
+rec:cdu\/5 a skos:Concept, basi:AreaCientifica ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:topConceptOf rec:esquema\/cdu ;
+    skos:notation "5" ;
+    skos:prefLabel "Ciências Naturais e Matemática"@pt ;
+    basi:nome "Ciências Naturais e Matemática" .
+
+rec:cdu\/6 a skos:Concept, basi:AreaCientifica ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:topConceptOf rec:esquema\/cdu ;
+    skos:notation "6" ;
+    skos:prefLabel "Ciências Aplicadas e Medicina"@pt ;
+    basi:nome "Ciências Aplicadas e Medicina" .
+
+rec:cdu\/82 a skos:Concept, basi:AreaCientifica ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:topConceptOf rec:esquema\/cdu ;
+    skos:notation "82" ;
+    skos:prefLabel "Literatura"@pt ;
+    basi:nome "Literatura" .
+
+# 3) GÉNEROS LITERÁRIOS — auxiliares de forma dentro da classe 82 (Literatura)
+#    skos:broader diz que cada género é uma SUBDIVISÃO da Literatura. É isto que
+#    permite à estante de Literatura abrir-se por género (Romance, Conto...).
+rec:cdu\/82-3 a skos:Concept, basi:Genero ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:broader rec:cdu\/82 ;
+    skos:notation "82-3" ;
+    skos:prefLabel "Romance"@pt ;
+    rdfs:comment "Ficção em prosa / prosa narrativa."@pt ;
+    basi:nome "Romance" .
+
+rec:cdu\/82-32 a skos:Concept, basi:Genero ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:broader rec:cdu\/82 ;
+    skos:notation "82-32" ;
+    skos:prefLabel "Conto"@pt ;
+    rdfs:comment "Conto e novela."@pt ;
+    basi:nome "Conto" .
+
+rec:cdu\/82-1 a skos:Concept, basi:Genero ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:broader rec:cdu\/82 ;
+    skos:notation "82-1" ;
+    skos:prefLabel "Poesia"@pt ;
+    rdfs:comment "Poesia / lírica."@pt ;
+    basi:nome "Poesia" .
+
+rec:cdu\/82-2 a skos:Concept, basi:Genero ;
+    skos:inScheme rec:esquema\/cdu ;
+    skos:broader rec:cdu\/82 ;
+    skos:notation "82-2" ;
+    skos:prefLabel "Teatro"@pt ;
+    rdfs:comment "Teatro / drama."@pt ;
+    basi:nome "Teatro" .
+
+# FIM — secções e géneros da biblioteca (CDU em SKOS)

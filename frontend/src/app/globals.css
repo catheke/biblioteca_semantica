@@ -1,0 +1,39 @@
+/* globals.css — estilos globais. Importa as três camadas do Tailwind. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #f4f7fc;
+  color: #1f2937;
+}
+
+/* Componentes reutilizáveis (utilitários compostos com @apply). */
+@layer components {
+  .btn-primario {
+    @apply inline-flex items-center justify-center rounded-lg bg-primaria px-4 py-2
+           font-medium text-white transition hover:bg-primaria-escura
+           disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-secundario {
+    @apply inline-flex items-center justify-center rounded-lg border border-primaria
+           px-4 py-2 font-medium text-primaria transition hover:bg-blue-50;
+  }
+  .cartao {
+    @apply rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md;
+  }
+  .campo {
+    @apply w-full rounded-lg border border-gray-300 px-3 py-2 outline-none
+           focus:border-primaria focus:ring-2 focus:ring-blue-100;
+  }
+  .etiqueta {
+    @apply mb-1 block text-sm font-medium text-gray-700;
+  }
+  .chip {
+    @apply inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-primaria;
+  }
+}

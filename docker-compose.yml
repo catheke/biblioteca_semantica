@@ -1,0 +1,131 @@
+# docker-compose.yml — Orquestração dos serviços do BASI.
+# Serviços: postgres (dados relacionais), fuseki (grafo RDF + SPARQL),
+# minio (ficheiros), backend (FastAPI) e frontend (Next.js).
+# Persistência poliglota: cada tipo de dado fica no motor mais adequado e o
+# backend coordena os três.
+# Executar: docker compose up --build
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1) PostgreSQL — Base de dados relacional
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: basi_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-basi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-basi_password}
+      POSTGRES_DB: ${POSTGRES_DB:-basi}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # O script de schema é executado automaticamente na PRIMEIRA inicialização.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-basi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # 2) Apache Jena Fuseki — Triple store RDF + SPARQL
+  # ---------------------------------------------------------------------------
+  fuseki:
+    image: stain/jena-fuseki:4.10.0
+    container_name: basi_fuseki
+    restart: unless-stopped
+    environment:
+      ADMIN_PASSWORD: ${FUSEKI_ADMIN_PASSWORD:-admin}
+      # Cria automaticamente um dataset persistente (TDB2) chamado "basi".
+      FUSEKI_DATASET_1: ${FUSEKI_DATASET:-basi}
+    ports:
+      - "3030:3030"
+    volumes:
+      - fuseki_data:/fuseki
+      # Disponibiliza a ontologia e os dados para carregamento via scripts.
+      - ./ontology:/staging/ontology:ro
+      - ./rdf:/staging/rdf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3030/$$/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # 3) MinIO — Armazenamento de objectos (compatível com S3)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2024-01-16T16-07-38Z
+    container_name: basi_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Consola web de administração
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # 4) Backend — API FastAPI
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      # Contexto na raiz para a imagem incluir backend/ + ontology/ + rdf/.
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: basi_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Dentro da rede Docker, os hosts são os nomes dos serviços.
+      POSTGRES_HOST: postgres
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-basi}:${POSTGRES_PASSWORD:-basi_password}@postgres:5432/${POSTGRES_DB:-basi}
+      FUSEKI_QUERY_ENDPOINT: http://fuseki:3030/${FUSEKI_DATASET:-basi}/query
+      FUSEKI_UPDATE_ENDPOINT: http://fuseki:3030/${FUSEKI_DATASET:-basi}/update
+      FUSEKI_DATA_ENDPOINT: http://fuseki:3030/${FUSEKI_DATASET:-basi}/data
+      MINIO_ENDPOINT: minio:9000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      fuseki:
+        condition: service_started
+      minio:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # 5) Frontend — Next.js
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: basi_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+# -----------------------------------------------------------------------------
+# Volumes nomeados (persistem os dados mesmo que os contentores sejam recriados)
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  fuseki_data:
+  minio_data:
