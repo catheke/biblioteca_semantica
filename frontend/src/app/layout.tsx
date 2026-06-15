@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ProvedorAuth } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Semantic Academic Hub (BASI)",
@@ -22,9 +23,7 @@ export default function RootLayout({
         <ProvedorAuth>
           <Navbar />
           <main>{children}</main>
-          <footer className="mt-16 border-t border-gray-200 bg-white py-6 text-center text-sm text-gray-400">
-            Semantic Academic Hub (BASI) — Projecto académico de Web Semântica.
-          </footer>
+          <Footer />
         </ProvedorAuth>
       </body>
     </html>

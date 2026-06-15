@@ -59,9 +59,9 @@ INSERT INTO palavras_chave (termo, uri_semantica) VALUES
 -- -----------------------------------------------------------------------------
 INSERT INTO utilizadores (nome, email, palavra_passe, perfil, instituicao, email_validado) VALUES
  ('Administrador BASI', 'admin@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'administrador', 'UMN', TRUE),
- ('Prof. Adriano Sigu', 'adriano@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'professor', 'UMN', TRUE),
+ ('Prof. Adriano De Júlio', 'adriano@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'professor', 'UMN', TRUE),
  ('Prof. Filipe Tchivela', 'filipe@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'professor', 'UMN', TRUE),
- ('Inv. Pedro Mendes', 'pedro@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'investigador', 'UMN', TRUE),
+ ('Inv. Pedro Calenga', 'pedro@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'investigador', 'UMN', TRUE),
  ('Estudante Maria Sousa', 'maria@basi.ao', '$2b$12$LQ8Q5e7zVZ6m1nQ8YQ8YuO2vJ9kF6cH3wT0pX1bN4dM7sR2aL9eS', 'estudante', 'UMN', TRUE);
 
 -- -----------------------------------------------------------------------------

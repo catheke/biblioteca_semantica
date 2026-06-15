@@ -71,7 +71,7 @@ basi:Palavra_Sparql     a basi:PalavraChave ; basi:nome "sparql" .
 
 # 4) PESSOAS (Professores, Investigador, Estudante)
 rec:pessoa\/adriano a basi:Professor ;
-    basi:nome "Prof. Adriano Sigu" ;
+    basi:nome "Prof. Adriano De Júlio" ;
     basi:email "adriano@basi.ao" .
 
 rec:pessoa\/filipe a basi:Professor ;
@@ -79,7 +79,7 @@ rec:pessoa\/filipe a basi:Professor ;
     basi:email "filipe@basi.ao" .
 
 rec:pessoa\/pedro a basi:Investigador ;
-    basi:nome "Inv. Pedro Mendes" ;
+    basi:nome "Inv. Pedro Calenga" ;
     basi:email "pedro@basi.ao" .
 
 rec:pessoa\/maria a basi:Estudante ;

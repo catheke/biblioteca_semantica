@@ -90,9 +90,9 @@ def executar() -> None:
         # --- Utilizadores (palavra-passe de todos: "password123") ---
         pw = hash_password("password123")
         admin = Utilizador(nome="Administrador BASI", email="admin@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.administrador, email_validado=True)
-        adriano = Utilizador(nome="Prof. Adriano Sigu", email="adriano@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.professor, email_validado=True)
+        adriano = Utilizador(nome="Prof. Adriano De Júlio", email="adriano@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.professor, email_validado=True)
         filipe = Utilizador(nome="Prof. Filipe Tchivela", email="filipe@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.professor, email_validado=True)
-        pedro = Utilizador(nome="Inv. Pedro Mendes", email="pedro@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.investigador, email_validado=True)
+        pedro = Utilizador(nome="Inv. Pedro Calenga", email="pedro@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.investigador, email_validado=True)
         maria = Utilizador(nome="Estudante Maria Sousa", email="maria@basi.ao", palavra_passe=pw, perfil=PerfilUtilizador.estudante, email_validado=True)
         db.add_all([admin, adriano, filipe, pedro, maria])
         db.flush()
@@ -100,12 +100,12 @@ def executar() -> None:
         # Documentos técnicos para a demonstração da pesquisa semântica
         # (sem ficheiro real; o foco é a inferência por temas).
         docs_tecnicos = [
-            Documento(titulo="Introdução à Inteligência Artificial", resumo="Fundamentos de IA.", tipo=TipoDocumento.livro, ano_publicacao=2023, autor_id=adriano.id, area_id=informatica.id, autor_nome="Adriano Sigu", nivel_acesso=NivelAcesso.publico),
-            Documento(titulo="Aprendizagem Profunda Aplicada", resumo="Redes neuronais e Deep Learning.", tipo=TipoDocumento.artigo, ano_publicacao=2024, autor_id=adriano.id, area_id=informatica.id, autor_nome="Adriano Sigu", nivel_acesso=NivelAcesso.autenticado),
+            Documento(titulo="Introdução à Inteligência Artificial", resumo="Fundamentos de IA.", tipo=TipoDocumento.livro, ano_publicacao=2023, autor_id=adriano.id, area_id=informatica.id, autor_nome="Adriano De Júlio", nivel_acesso=NivelAcesso.publico),
+            Documento(titulo="Aprendizagem Profunda Aplicada", resumo="Redes neuronais e Deep Learning.", tipo=TipoDocumento.artigo, ano_publicacao=2024, autor_id=adriano.id, area_id=informatica.id, autor_nome="Adriano De Júlio", nivel_acesso=NivelAcesso.autenticado),
             Documento(titulo="Web Semântica e Ontologias OWL", resumo="RDF, OWL e SPARQL.", tipo=TipoDocumento.tese, ano_publicacao=2024, autor_id=filipe.id, area_id=informatica.id, autor_nome="Filipe Tchivela", nivel_acesso=NivelAcesso.academico),
-            Documento(titulo="Visão Computacional com Python", resumo="Processamento de imagem.", tipo=TipoDocumento.manual, ano_publicacao=2023, autor_id=pedro.id, area_id=informatica.id, autor_nome="Pedro Mendes", nivel_acesso=NivelAcesso.publico),
+            Documento(titulo="Visão Computacional com Python", resumo="Processamento de imagem.", tipo=TipoDocumento.manual, ano_publicacao=2023, autor_id=pedro.id, area_id=informatica.id, autor_nome="Pedro Calenga", nivel_acesso=NivelAcesso.publico),
             Documento(titulo="Fundamentos de Cardiologia", resumo="Patologias cardíacas.", tipo=TipoDocumento.livro, ano_publicacao=2022, autor_id=filipe.id, area_id=medicina.id, autor_nome="Filipe Tchivela", nivel_acesso=NivelAcesso.academico),
-            Documento(titulo="Ciência de Dados para Iniciantes", resumo="Pandas e visualização.", tipo=TipoDocumento.material_didactico, ano_publicacao=2024, autor_id=pedro.id, area_id=informatica.id, autor_nome="Pedro Mendes", nivel_acesso=NivelAcesso.autenticado),
+            Documento(titulo="Ciência de Dados para Iniciantes", resumo="Pandas e visualização.", tipo=TipoDocumento.material_didactico, ano_publicacao=2024, autor_id=pedro.id, area_id=informatica.id, autor_nome="Pedro Calenga", nivel_acesso=NivelAcesso.autenticado),
         ]
 
         # Livros de domínio público (Project Gutenberg), com capa e ligação para
