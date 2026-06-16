@@ -27,7 +27,7 @@ services:
     runtime: image
     plan: free
     image:
-      url: docker.io/stain/jena-fuseki:4.10.0
+      url: docker.io/stain/jena-fuseki:4.8.0
     envVars:
       - key: ADMIN_PASSWORD
         generateValue: true
