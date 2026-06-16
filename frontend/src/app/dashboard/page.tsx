@@ -27,7 +27,7 @@ export default function PaginaDashboard() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-800">
-        Olá, {utilizador.nome.split(" ")[0]} 👋
+        Olá, {utilizador.nome.split(" ")[0]}
       </h1>
       <p className="mt-1 text-gray-500 capitalize">Perfil: {utilizador.perfil}</p>
 

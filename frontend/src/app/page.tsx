@@ -1,21 +1,55 @@
 // page.tsx — Página inicial (Home). Apresenta a plataforma e o seu diferencial.
 import Link from "next/link";
 
+// Ícones (SVG simples, traço — sem emojis).
+const Icone = {
+  lupa: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  ),
+  pessoas: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  livros: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  ),
+  documento: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  ),
+};
+
 const FUNCIONALIDADES = [
   {
-    icone: "🔎",
+    icone: Icone.lupa,
     titulo: "Encontre mais do que procurou",
     texto:
       "Pesquise por um tema e descubra também os assuntos relacionados. Procure “Inteligência Artificial” e veja igualmente obras sobre aprendizagem automática e redes neurais.",
   },
   {
-    icone: "👥",
+    icone: Icone.pessoas,
     titulo: "Acompanhe quem lhe interessa",
     texto:
       "Siga professores e investigadores, guarde os seus livros favoritos e receba sugestões de leitura segundo os temas que mais consulta.",
   },
   {
-    icone: "📚",
+    icone: Icone.livros,
     titulo: "Tudo num só lugar",
     texto:
       "Livros, artigos, teses e materiais de apoio às aulas, organizados por área e por tema — fáceis de ler ou descarregar.",
@@ -79,7 +113,7 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-md">
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-primaria/5">
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-fundo px-3 py-2.5">
-                <span className="text-gray-400">🔎</span>
+                <span className="text-gray-400">{Icone.lupa}</span>
                 <span className="text-sm text-gray-700">Inteligência Artificial</span>
               </div>
 
@@ -110,7 +144,7 @@ export default function Home() {
                     className="flex items-center gap-3 rounded-lg border border-gray-100 bg-white px-3 py-2"
                   >
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-blue-50 text-primaria">
-                      📄
+                      {Icone.documento}
                     </span>
                     <span className="truncate text-sm text-gray-700">{titulo}</span>
                   </li>
@@ -152,7 +186,7 @@ export default function Home() {
           <div className="grid gap-6 md:grid-cols-3">
             {FUNCIONALIDADES.map((f) => (
               <div key={f.titulo} className="cartao">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-2xl">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-primaria">
                   {f.icone}
                 </span>
                 <h3 className="mb-2 mt-4 text-lg font-semibold text-gray-800">

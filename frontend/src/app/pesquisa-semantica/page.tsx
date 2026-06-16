@@ -67,31 +67,67 @@ export default function PaginaPesquisaSemantica() {
 
       {estado === "ok" && resposta && (
         <div className="mt-8 space-y-6">
-          <div className="cartao">
-            <h2 className="mb-2 font-semibold text-gray-800">
-              Temas relacionados
-            </h2>
-            <p className="mb-3 text-sm text-gray-500">
-              A pesquisa por &quot;{resposta.termo}&quot; inclui também:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {resposta.termos_expandidos.map((t) => (
-                <span key={t} className="chip">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="mb-3 font-semibold text-gray-800">
-              {resposta.resultados.length} documento(s) encontrado(s)
-            </h2>
-            {resposta.resultados.length === 0 ? (
-              <p className="text-gray-500">
-                Não foram encontradas obras para este tema.
+          {/* Temas relacionados — só quando o termo corresponde a um tema. */}
+          {resposta.tema_encontrado && resposta.termos_expandidos.length > 0 && (
+            <div className="cartao">
+              <h2 className="mb-2 font-semibold text-gray-800">
+                Temas relacionados
+              </h2>
+              <p className="mb-3 text-sm text-gray-500">
+                Para além de &quot;{resposta.termo}&quot;, a pesquisa considerou
+                os temas ligados a este:
               </p>
-            ) : (
+              <div className="flex flex-wrap gap-2">
+                {resposta.termos_expandidos.map((t) => (
+                  <span key={t} className="chip">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Aviso quando recorremos à pesquisa no título/resumo. */}
+          {!resposta.tema_encontrado && resposta.resultados.length > 0 && (
+            <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
+              &quot;{resposta.termo}&quot; não é um tema da biblioteca. Mostramos
+              as obras que mencionam este termo no título ou no resumo.
+            </div>
+          )}
+
+          {/* Resultados ou estado vazio com sugestões. */}
+          {resposta.resultados.length === 0 ? (
+            <div className="cartao">
+              <h2 className="font-semibold text-gray-800">
+                Sem resultados para &quot;{resposta.termo}&quot;
+              </h2>
+              <p className="mt-1 text-gray-500">
+                Não encontrámos obras nem temas com este nome.
+              </p>
+              {resposta.sugestoes.length > 0 && (
+                <>
+                  <p className="mt-4 text-sm font-medium text-gray-700">
+                    Experimente um destes temas:
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {resposta.sugestoes.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => procurar(s)}
+                        className="chip hover:bg-blue-100"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div>
+              <h2 className="mb-3 font-semibold text-gray-800">
+                {resposta.resultados.length} documento(s) encontrado(s)
+              </h2>
               <ul className="space-y-3">
                 {resposta.resultados.map((r, i) => (
                   <li key={i} className="cartao">
@@ -102,8 +138,8 @@ export default function PaginaPesquisaSemantica() {
                   </li>
                 ))}
               </ul>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

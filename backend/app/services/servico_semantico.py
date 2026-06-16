@@ -152,49 +152,133 @@ class ServicoSemantico:
         return linhas
 
     # Pesquisa semântica (expansão por subtemas)
+    @staticmethod
+    def _escapar(termo: str) -> str:
+        """Escapa aspas para não quebrar a consulta SPARQL (defesa básica)."""
+        return termo.replace("\\", "\\\\").replace('"', '\\"')
+
+    @staticmethod
+    def _normalizar(texto: str) -> str:
+        """Minúsculas e SEM acentos — para comparar 'inteligencia' com 'Inteligência'."""
+        import unicodedata
+
+        base = unicodedata.normalize("NFKD", texto)
+        base = base.encode("ascii", "ignore").decode()
+        return base.strip().lower()
+
+    def _todos_os_temas(self) -> list[str]:
+        """Lista o nome de todos os Temas da ontologia."""
+        query = f"""{PREFIXOS}
+        SELECT DISTINCT ?nome WHERE {{ ?t a basi:Tema ; basi:nome ?nome . }}"""
+        return [l["nome"] for l in self.executar_select(query) if "nome" in l]
+
+    def temas_correspondentes(self, termo: str) -> list[str]:
+        """
+        Encontra os Temas da ontologia que correspondem ao termo procurado.
+
+        A comparação ignora maiúsculas E acentos. Tenta primeiro uma
+        correspondência EXACTA e, se nada encontrar, uma correspondência PARCIAL
+        (o nome do tema contém o termo). Assim "machine" encontra "Machine
+        Learning" e "inteligencia artificial" encontra "Inteligência Artificial".
+        """
+        alvo = self._normalizar(termo)
+        if not alvo:
+            return []
+        temas = self._todos_os_temas()
+
+        exactos = [t for t in temas if self._normalizar(t) == alvo]
+        if exactos:
+            return exactos
+        return [t for t in temas if alvo in self._normalizar(t)]
+
     def expandir_termo(self, termo: str) -> list[str]:
         """
-        Dado o nome de um tema, devolve esse tema MAIS todos os seus subtemas
-        (directos e indirectos), graças ao caminho transitivo `^basi:eSubtemaDe*`.
+        Dado um termo, encontra o(s) tema(s) correspondente(s) e devolve-os MAIS
+        todos os seus subtemas (directos e indirectos), graças ao caminho
+        transitivo `basi:eSubtemaDe*`.
 
-        Esta é a operação de INFERÊNCIA que distingue pesquisa semântica de
-        pesquisa textual.
+        Esta é a operação de INFERÊNCIA que distingue a pesquisa semântica da
+        textual. Se o termo NÃO corresponder a nenhum tema, devolve uma lista
+        vazia (não inventa o termo como se fosse um tema).
         """
-        # Escapamos aspas para evitar quebrar a consulta (defesa básica).
-        termo_seguro = termo.replace('"', '\\"')
-        query = f"""{PREFIXOS}
-        SELECT DISTINCT ?nomeSub WHERE {{
-            ?temaRaiz basi:nome "{termo_seguro}" .
-            ?sub basi:eSubtemaDe* ?temaRaiz ;
-                 basi:nome ?nomeSub .
-        }}
-        """
-        linhas = self.executar_select(query)
-        nomes = [linha["nomeSub"] for linha in linhas if "nomeSub" in linha]
-        # Garante que o próprio termo entra mesmo que não haja subtemas.
-        if termo not in nomes:
-            nomes.insert(0, termo)
+        nomes: list[str] = []
+        for raiz in self.temas_correspondentes(termo):
+            raiz_seguro = self._escapar(raiz)
+            query = f"""{PREFIXOS}
+            SELECT DISTINCT ?nomeSub WHERE {{
+                ?temaRaiz basi:nome "{raiz_seguro}" .
+                ?sub basi:eSubtemaDe* ?temaRaiz ;
+                     basi:nome ?nomeSub .
+            }}"""
+            for linha in self.executar_select(query):
+                nome = linha.get("nomeSub")
+                if nome and nome not in nomes:
+                    nomes.append(nome)
         return nomes
 
     def pesquisar_documentos_por_tema(self, termo: str) -> list[dict]:
         """
-        Devolve documentos cujo tema é o termo dado OU um subtema deste.
+        Devolve documentos cujo tema corresponde ao termo OU é um subtema deste.
 
         Cada resultado inclui o `nomeTema` que o fez aparecer — usado para
         explicar ao utilizador PORQUÊ o resultado é relevante.
         """
-        termo_seguro = termo.replace('"', '\\"')
+        resultados: list[dict] = []
+        vistos: set[str] = set()
+        for raiz in self.temas_correspondentes(termo):
+            raiz_seguro = self._escapar(raiz)
+            query = f"""{PREFIXOS}
+            SELECT DISTINCT ?doc ?titulo ?nomeTema WHERE {{
+                ?temaRaiz basi:nome "{raiz_seguro}" .
+                ?tema basi:eSubtemaDe* ?temaRaiz ;
+                      basi:nome ?nomeTema .
+                ?doc basi:temTema ?tema ;
+                     basi:titulo ?titulo .
+            }}
+            ORDER BY ?titulo
+            """
+            for linha in self.executar_select(query):
+                doc = linha.get("doc")
+                if doc and doc not in vistos:
+                    vistos.add(doc)
+                    resultados.append(linha)
+        return resultados
+
+    def pesquisar_documentos_por_texto(self, termo: str) -> list[dict]:
+        """
+        Recurso de RESERVA: quando o termo não é um tema conhecido, procura
+        documentos cujo TÍTULO ou RESUMO mencionem o termo (ignorando acentos e
+        maiúsculas). Garante que o utilizador recebe algo útil em vez de uma
+        página vazia.
+        """
+        alvo = self._normalizar(termo)
+        if not alvo:
+            return []
         query = f"""{PREFIXOS}
-        SELECT DISTINCT ?doc ?titulo ?nomeTema WHERE {{
-            ?temaRaiz basi:nome "{termo_seguro}" .
-            ?tema basi:eSubtemaDe* ?temaRaiz ;
-                  basi:nome ?nomeTema .
-            ?doc basi:temTema ?tema ;
-                 basi:titulo ?titulo .
+        SELECT DISTINCT ?doc ?titulo ?resumo WHERE {{
+            ?doc basi:titulo ?titulo .
+            OPTIONAL {{ ?doc basi:resumo ?resumo }}
         }}
         ORDER BY ?titulo
         """
-        return self.executar_select(query)
+        resultados: list[dict] = []
+        for linha in self.executar_select(query):
+            titulo = linha.get("titulo", "")
+            resumo = linha.get("resumo", "")
+            if alvo in self._normalizar(f"{titulo} {resumo}"):
+                resultados.append({"doc": linha.get("doc"), "titulo": titulo})
+        return resultados
+
+    def temas_principais(self) -> list[str]:
+        """Temas de topo (sem supertema) — sugeridos quando não há resultados."""
+        query = f"""{PREFIXOS}
+        SELECT DISTINCT ?nome WHERE {{
+            ?t a basi:Tema ; basi:nome ?nome .
+            FILTER NOT EXISTS {{ ?t basi:eSubtemaDe ?outro }}
+        }}
+        ORDER BY ?nome
+        """
+        return [l["nome"] for l in self.executar_select(query) if "nome" in l]
 
     # Recomendações (documentos relacionados com os favoritos de um utilizador)
     def recomendar_para_utilizador(self, uri_utilizador: str) -> list[dict]:

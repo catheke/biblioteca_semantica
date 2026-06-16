@@ -81,8 +81,10 @@ export interface ResultadoPesquisa {
 
 export interface RespostaSemantica {
   termo: string;
+  tema_encontrado: boolean;
   termos_expandidos: string[];
   resultados: ResultadoPesquisa[];
+  sugestoes: string[];
 }
 
 export interface Tokens {

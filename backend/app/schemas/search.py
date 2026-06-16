@@ -20,10 +20,19 @@ class ResultadoPesquisa(BaseModel):
 
 class RespostaPesquisaSemantica(BaseModel):
     termo: str
+    tema_encontrado: bool = Field(
+        default=False,
+        description="True se o termo corresponde a um tema da biblioteca.",
+    )
     termos_expandidos: list[str] = Field(
-        description="Temas relacionados encontrados por inferência (subtemas, etc.)."
+        default_factory=list,
+        description="Temas relacionados encontrados por inferência (subtemas, etc.).",
     )
     resultados: list[ResultadoPesquisa]
+    sugestoes: list[str] = Field(
+        default_factory=list,
+        description="Temas sugeridos quando não há resultados.",
+    )
 
 
 class SparqlPedido(BaseModel):
