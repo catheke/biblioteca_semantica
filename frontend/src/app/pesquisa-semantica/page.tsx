@@ -3,7 +3,7 @@
 // Mostra os termos expandidos por inferência E os documentos encontrados, com
 // a explicação de PORQUÊ cada resultado é relevante.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { RespostaSemantica } from "@/types";
 
@@ -26,6 +26,13 @@ export default function PaginaPesquisaSemantica() {
       setEstado("erro");
     }
   }
+
+  // Permite ligações directas para uma pesquisa, ex.: /pesquisa-semantica?q=Machine+Learning
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q && q.trim()) procurar(q.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

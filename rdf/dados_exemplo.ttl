@@ -59,15 +59,37 @@ basi:Tema_WebSemantica a basi:Tema ;
     basi:nome "Web Semântica" ;
     basi:temaDaArea rec:area\/informatica .
 
+# Subtemas adicionais — aprofundam a hierarquia (transitividade a 3 níveis):
+#   IA -> Machine Learning -> Aprendizagem por Reforço
+#   IA -> Ciência de Dados  -> Big Data
+#   IA -> Processamento de Linguagem Natural
+basi:Tema_ProcessamentoLinguagemNatural a basi:Tema ;
+    basi:nome "Processamento de Linguagem Natural" ;
+    basi:eSubtemaDe basi:Tema_InteligenciaArtificial ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_AprendizagemPorReforco a basi:Tema ;
+    basi:nome "Aprendizagem por Reforço" ;
+    basi:eSubtemaDe basi:Tema_MachineLearning ;
+    basi:temaDaArea rec:area\/informatica .
+
+basi:Tema_BigData a basi:Tema ;
+    basi:nome "Big Data" ;
+    basi:eSubtemaDe basi:Tema_CienciaDeDados ;
+    basi:temaDaArea rec:area\/informatica .
+
 basi:Tema_Cardiologia a basi:Tema ;
     basi:nome "Cardiologia" ;
     basi:temaDaArea rec:area\/medicina .
 
 # 3) PALAVRAS-CHAVE
-basi:Palavra_Algoritmos a basi:PalavraChave ; basi:nome "algoritmos" .
-basi:Palavra_Python     a basi:PalavraChave ; basi:nome "python" .
-basi:Palavra_Ontologia  a basi:PalavraChave ; basi:nome "ontologia" .
-basi:Palavra_Sparql     a basi:PalavraChave ; basi:nome "sparql" .
+basi:Palavra_Algoritmos   a basi:PalavraChave ; basi:nome "algoritmos" .
+basi:Palavra_Python       a basi:PalavraChave ; basi:nome "python" .
+basi:Palavra_Ontologia    a basi:PalavraChave ; basi:nome "ontologia" .
+basi:Palavra_Sparql       a basi:PalavraChave ; basi:nome "sparql" .
+basi:Palavra_DeepLearning a basi:PalavraChave ; basi:nome "deep learning" .
+basi:Palavra_Dados        a basi:PalavraChave ; basi:nome "dados" .
+basi:Palavra_RedesNeurais a basi:PalavraChave ; basi:nome "redes neurais" .
 
 # 4) PESSOAS (Professores, Investigador, Estudante)
 rec:pessoa\/adriano a basi:Professor ;
@@ -148,8 +170,81 @@ rec:documento\/doc6 a basi:MaterialDidactico ;
     basi:temPalavraChave basi:Palavra_Python ;
     basi:numDownloads 150 .
 
-# Relação simétrica explícita (o raciocinador infere o sentido inverso).
-rec:documento\/doc2 basi:obraRelacionada rec:documento\/doc6 .
+rec:documento\/doc7 a basi:Artigo ;
+    basi:titulo "Processamento de Linguagem Natural com Transformers" ;
+    basi:resumo "Modelos de atenção, embeddings e tradução automática." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/pedro ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_ProcessamentoLinguagemNatural ;
+    basi:temPalavraChave basi:Palavra_Python, basi:Palavra_DeepLearning ;
+    basi:citaObra rec:documento\/doc1, rec:documento\/doc2 ;
+    basi:numDownloads 110 .
+
+rec:documento\/doc8 a basi:Livro ;
+    basi:titulo "Big Data e Engenharia de Dados" ;
+    basi:resumo "Sistemas distribuídos, pipelines e processamento em larga escala." ;
+    basi:anoPublicacao "2023"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/filipe ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_BigData ;
+    basi:temPalavraChave basi:Palavra_Python, basi:Palavra_Dados ;
+    basi:citaObra rec:documento\/doc6 ;
+    basi:numDownloads 88 .
+
+# Documento INTERDISCIPLINAR: liga Informática (Redes Neurais) e Medicina
+# (Cardiologia) — mostra relações semânticas que atravessam áreas.
+rec:documento\/doc9 a basi:Tese ;
+    basi:titulo "Redes Neurais para Diagnóstico de Doenças Cardíacas" ;
+    basi:resumo "Modelos de aprendizagem profunda aplicados a electrocardiogramas." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/adriano ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_RedesNeurais, basi:Tema_Cardiologia ;
+    basi:temPalavraChave basi:Palavra_RedesNeurais, basi:Palavra_DeepLearning ;
+    basi:citaObra rec:documento\/doc2, rec:documento\/doc5 ;
+    basi:numDownloads 73 .
+
+rec:documento\/doc10 a basi:Artigo ;
+    basi:titulo "Deep Learning aplicado à Visão Computacional" ;
+    basi:resumo "Detecção e segmentação de objectos com redes profundas." ;
+    basi:anoPublicacao "2023"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/pedro ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_DeepLearning, basi:Tema_VisaoComputacional ;
+    basi:temPalavraChave basi:Palavra_Python, basi:Palavra_DeepLearning ;
+    basi:citaObra rec:documento\/doc4 ;
+    basi:numDownloads 102 .
+
+rec:documento\/doc11 a basi:Manual ;
+    basi:titulo "Grafos de Conhecimento e Consultas SPARQL" ;
+    basi:resumo "Modelação de ontologias, RDF e interrogação com SPARQL." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/filipe ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_WebSemantica ;
+    basi:temPalavraChave basi:Palavra_Ontologia, basi:Palavra_Sparql ;
+    basi:citaObra rec:documento\/doc3 ;
+    basi:numDownloads 67 .
+
+rec:documento\/doc12 a basi:MaterialDidactico ;
+    basi:titulo "Ética e Aprendizagem por Reforço" ;
+    basi:resumo "Agentes autónomos, recompensas e implicações éticas da IA." ;
+    basi:anoPublicacao "2024"^^xsd:gYear ;
+    basi:temAutor rec:pessoa\/adriano ;
+    basi:pertenceAArea rec:area\/informatica ;
+    basi:temTema basi:Tema_AprendizagemPorReforco ;
+    basi:temPalavraChave basi:Palavra_Algoritmos ;
+    basi:citaObra rec:documento\/doc1 ;
+    basi:numDownloads 54 .
+
+# Relações simétricas explícitas (o raciocinador infere o sentido inverso).
+rec:documento\/doc2  basi:obraRelacionada rec:documento\/doc6 .
+rec:documento\/doc7  basi:obraRelacionada rec:documento\/doc2 .
+rec:documento\/doc9  basi:obraRelacionada rec:documento\/doc4 .
+rec:documento\/doc10 basi:obraRelacionada rec:documento\/doc2 .
+rec:documento\/doc11 basi:obraRelacionada rec:documento\/doc3 .
+rec:documento\/doc8  basi:obraRelacionada rec:documento\/doc6 .
 
 # 6) REDE SOCIAL (seguir, favoritos)
 rec:pessoa\/maria basi:segue rec:pessoa\/adriano , rec:pessoa\/filipe .

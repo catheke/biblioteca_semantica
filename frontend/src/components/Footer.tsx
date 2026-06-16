@@ -92,7 +92,7 @@ export default function Footer() {
             <li className="font-medium text-gray-300">
               Universidade Mandume ya Ndemufayo
             </li>
-            <li>Instituto Politécnico da Huíla</li>
+            <li>Instituto Superior Politécnico da Huíla</li>
             <li>Lubango, Huíla — Angola</li>
             <li className="pt-1">
               <a
