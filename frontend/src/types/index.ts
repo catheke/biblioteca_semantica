@@ -183,3 +183,57 @@ export interface RelatorioCirculacao {
   total_emprestimos_historico: number;
   obras_mais_requisitadas: ObraMaisRequisitada[];
 }
+
+// ---- Histórico, notificações e estatísticas ----
+export interface LeituraHistorico {
+  documento_id: number;
+  titulo: string;
+  tipo?: string | null;
+  capa_url?: string | null;
+  data: string;
+}
+
+export interface PesquisaHistorico {
+  termo: string;
+  semantica: boolean;
+  data: string;
+}
+
+export interface Notificacao {
+  id: number;
+  mensagem: string;
+  documento_id?: number | null;
+  data: string;
+}
+
+export interface Notificacoes {
+  nao_lidas: number;
+  itens: Notificacao[];
+}
+
+export interface ItemContagem {
+  documento_id: number;
+  titulo: string;
+  valor: number;
+}
+
+export interface CategoriaContagem {
+  nome: string;
+  total: number;
+}
+
+export interface TermoContagem {
+  termo: string;
+  total: number;
+}
+
+export interface Estatisticas {
+  total_documentos: number;
+  total_utilizadores: number;
+  total_downloads: number;
+  total_visualizacoes: number;
+  mais_vistos: ItemContagem[];
+  mais_descarregados: ItemContagem[];
+  por_categoria: CategoriaContagem[];
+  termos_mais_pesquisados: TermoContagem[];
+}

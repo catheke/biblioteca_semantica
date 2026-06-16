@@ -168,9 +168,14 @@ export default function PaginaAdmin() {
             Gestão de utilizadores e do catálogo de documentos.
           </p>
         </div>
-        <Link href="/admin/circulacao" className="btn-primario py-1.5 text-sm">
-          Circulação (empréstimos e multas)
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/estatisticas" className="btn-secundario py-1.5 text-sm">
+            Estatísticas
+          </Link>
+          <Link href="/admin/circulacao" className="btn-primario py-1.5 text-sm">
+            Circulação (empréstimos e multas)
+          </Link>
+        </div>
       </div>
 
       {erro && (

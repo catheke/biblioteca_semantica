@@ -1,40 +1,45 @@
 "use client";
-// pesquisa/page.tsx — Pesquisa por título/resumo com recurso à camada semântica.
-// Procura primeiro no texto (títulos/resumos). Se não encontrar nada, recorre
-// automaticamente à pesquisa por significado (temas e subtemas relacionados),
-// para que o utilizador receba sempre resultados úteis.
+// pesquisa/page.tsx — Pesquisa no catálogo com filtros (título/resumo, autor, ano).
+// Procura primeiro no catálogo (com os filtros indicados). Se uma pesquisa só por
+// texto não devolver nada, recorre automaticamente à camada semântica (temas e
+// subtemas relacionados), para que o utilizador receba sempre resultados úteis.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import type { ResultadoPesquisa } from "@/types";
-
-type Origem = "texto" | "semantica";
+import type { Documento, ResultadoPesquisa } from "@/types";
 
 export default function PaginaPesquisa() {
   const [termo, setTermo] = useState("");
-  const [resultados, setResultados] = useState<ResultadoPesquisa[]>([]);
-  const [origem, setOrigem] = useState<Origem>("texto");
+  const [autor, setAutor] = useState("");
+  const [ano, setAno] = useState("");
+  const [docs, setDocs] = useState<Documento[]>([]);
+  const [semanticos, setSemanticos] = useState<ResultadoPesquisa[]>([]);
   const [estado, setEstado] = useState<"inicial" | "carregando" | "ok" | "erro">(
     "inicial",
   );
 
-  async function procurar(q: string) {
-    if (q.trim().length < 2) return;
+  async function procurar() {
+    const q = termo.trim();
+    const a = autor.trim();
+    const y = ano.trim();
+    if (!q && !a && !y) return;
     setEstado("carregando");
+    setSemanticos([]);
     try {
-      // 1) Pesquisa textual (rápida, no catálogo).
-      const textuais = await api.pesquisaTextual(q.trim());
-      if (textuais.length > 0) {
-        setResultados(textuais);
-        setOrigem("texto");
-        setEstado("ok");
-        return;
+      // 1) Pesquisa no catálogo, com os filtros indicados.
+      const params: Record<string, string | number> = { por_pagina: 50 };
+      if (q) params.q = q;
+      if (a) params.autor = a;
+      if (y) params.ano = y;
+      const pagina = await api.listarDocumentos(params);
+      setDocs(pagina.itens);
+
+      // 2) Sem resultados e a pesquisar só por texto -> camada semântica.
+      if (pagina.itens.length === 0 && q && !a && !y) {
+        const semantica = await api.pesquisaSemantica(q);
+        setSemanticos(semantica.resultados);
       }
-      // 2) Sem correspondência textual -> recorre à camada semântica.
-      const semantica = await api.pesquisaSemantica(q.trim());
-      setResultados(semantica.resultados);
-      setOrigem("semantica");
       setEstado("ok");
     } catch {
       setEstado("erro");
@@ -46,7 +51,21 @@ export default function PaginaPesquisa() {
     const q = new URLSearchParams(window.location.search).get("q");
     if (q && q.trim()) {
       setTermo(q.trim());
-      procurar(q.trim());
+      // pequena espera para o estado actualizar antes de procurar
+      setTimeout(() => {
+        setEstado("carregando");
+        api
+          .listarDocumentos({ q: q.trim(), por_pagina: 50 })
+          .then(async (pagina) => {
+            setDocs(pagina.itens);
+            if (pagina.itens.length === 0) {
+              const s = await api.pesquisaSemantica(q.trim());
+              setSemanticos(s.resultados);
+            }
+            setEstado("ok");
+          })
+          .catch(() => setEstado("erro"));
+      }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -55,24 +74,39 @@ export default function PaginaPesquisa() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-bold text-gray-800">Pesquisa</h1>
       <p className="mt-1 text-gray-500">
-        Procure por título ou assunto. Se não houver correspondência exacta,
-        mostramos obras sobre temas relacionados.
+        Procure por título, assunto, autor ou ano. Se uma pesquisa por texto não
+        tiver correspondência, mostramos obras sobre temas relacionados.
       </p>
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          procurar(termo);
+          procurar();
         }}
-        className="mt-6 flex gap-2"
+        className="mt-6 space-y-3"
       >
         <input
           className="campo"
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
-          placeholder="Ex.: Inteligência Artificial, Machine Learning…"
+          placeholder="Título ou assunto (ex.: Inteligência Artificial)"
         />
-        <button className="btn-primario">Procurar</button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            className="campo"
+            value={autor}
+            onChange={(e) => setAutor(e.target.value)}
+            placeholder="Autor (ex.: Machado de Assis)"
+          />
+          <input
+            className="campo sm:max-w-[160px]"
+            value={ano}
+            onChange={(e) => setAno(e.target.value)}
+            inputMode="numeric"
+            placeholder="Ano (ex.: 2020)"
+          />
+        </div>
+        <button className="btn-primario w-full sm:w-auto">Procurar</button>
       </form>
 
       {estado === "carregando" && (
@@ -87,33 +121,46 @@ export default function PaginaPesquisa() {
 
       {estado === "ok" && (
         <div className="mt-8">
-          {resultados.length === 0 ? (
+          {docs.length === 0 && semanticos.length === 0 ? (
             <div className="cartao">
-              <p className="text-gray-600">
-                Não encontrámos obras para &quot;{termo}&quot;.
-              </p>
+              <p className="text-gray-600">Não encontrámos obras para esta pesquisa.</p>
               <p className="mt-2 text-sm text-gray-500">
-                Experimente a{" "}
+                Experimente outros termos ou a{" "}
                 <Link
                   href={`/pesquisa-semantica?q=${encodeURIComponent(termo)}`}
                   className="text-primaria underline"
                 >
                   pesquisa por descoberta
-                </Link>{" "}
-                para ver temas relacionados.
+                </Link>
+                .
               </p>
             </div>
+          ) : docs.length > 0 ? (
+            <ul className="space-y-3">
+              {docs.map((d) => (
+                <li key={d.id} className="cartao">
+                  <Link href={`/documento/${d.id}`} className="block">
+                    <h3 className="font-semibold text-gray-800 hover:text-primaria">
+                      {d.titulo}
+                    </h3>
+                  </Link>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <span className="chip">{d.tipo}</span>
+                    {d.autor_nome && <span>· {d.autor_nome}</span>}
+                    {d.ano_publicacao && <span>· {d.ano_publicacao}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
           ) : (
             <>
-              {origem === "semantica" && (
-                <div className="mb-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-                  Não houve correspondência no título nem no resumo. Mostramos as
-                  obras encontradas por significado — sobre &quot;{termo}&quot; e
-                  os seus temas relacionados.
-                </div>
-              )}
+              <div className="mb-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
+                Não houve correspondência no título nem no resumo. Mostramos as
+                obras encontradas por significado — temas relacionados com a sua
+                pesquisa.
+              </div>
               <ul className="space-y-3">
-                {resultados.map((r, i) => (
+                {semanticos.map((r, i) => (
                   <li key={i} className="cartao">
                     <h3 className="font-semibold text-gray-800">{r.titulo}</h3>
                     {r.tipo && <span className="chip mt-1">{r.tipo}</span>}

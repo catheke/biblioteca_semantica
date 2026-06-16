@@ -1,8 +1,8 @@
 // CartaoDocumento.tsx — Cartão visual que representa um documento numa lista.
 
 import Link from "next/link";
-import { urlMedia } from "@/lib/api";
 import type { Documento } from "@/types";
+import CapaLivro from "@/components/CapaLivro";
 
 const CORES_TIPO: Record<string, string> = {
   livro: "bg-blue-50 text-primaria",
@@ -24,16 +24,13 @@ const ACESSO: Record<string, { texto: string; cor: string }> = {
 export default function CartaoDocumento({ doc }: { doc: Documento }) {
   const acesso = ACESSO[doc.nivel_acesso ?? "publico"];
   return (
-    <Link href={`/documento/${doc.id}`} className="cartao block overflow-hidden">
-      {doc.capa_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={urlMedia(doc.capa_url)}
-          alt={`Capa de ${doc.titulo}`}
-          className="mb-3 h-44 w-full rounded-lg object-cover"
-          loading="lazy"
+    <Link href={`/documento/${doc.id}`} className="cartao group block overflow-hidden">
+      <div className="mb-3 aspect-[3/4] w-full">
+        <CapaLivro
+          doc={doc}
+          className="h-full transition group-hover:scale-[1.02]"
         />
-      )}
+      </div>
       <div className="mb-2 flex items-center justify-between">
         <span className={`chip ${CORES_TIPO[doc.tipo] ?? ""}`}>
           {doc.tipo.replace("_", " ")}

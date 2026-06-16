@@ -30,6 +30,7 @@ from app.schemas.document import (
     PaginaResposta,
     SeccaoBiblioteca,
 )
+from app.services.servico_actividade import ServicoActividade
 from app.services.servico_documentos import ServicoDocumentos
 
 router = APIRouter()
@@ -45,12 +46,22 @@ def listar_documentos(
     tipo: Optional[TipoDocumento] = None,
     area_id: Optional[int] = None,
     genero: Optional[str] = None,
+    q: Optional[str] = Query(None, description="Texto no título ou resumo."),
+    autor: Optional[str] = Query(None, description="Nome do autor da obra."),
+    ano: Optional[int] = Query(None, description="Ano de publicação."),
     pagina: int = Query(1, ge=1),
     por_pagina: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     itens, total = ServicoDocumentos(db).listar(
-        tipo=tipo, area_id=area_id, genero=genero, pagina=pagina, por_pagina=por_pagina
+        tipo=tipo,
+        area_id=area_id,
+        genero=genero,
+        q=q,
+        autor=autor,
+        ano=ano,
+        pagina=pagina,
+        por_pagina=por_pagina,
     )
     return _pagina(itens, total, pagina, por_pagina)
 
@@ -138,6 +149,9 @@ def descarregar_documento(
     o download.
     """
     caminho, nome, mime = ServicoDocumentos(db).ficheiro_para_descarregar(doc_id, utilizador)
+    # Regista a leitura/descarga no histórico do utilizador (se houver sessão).
+    if utilizador is not None:
+        ServicoActividade(db).registar_leitura(utilizador.id, doc_id)
     return FileResponse(caminho, media_type=mime, filename=nome)
 
 

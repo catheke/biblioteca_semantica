@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { api, urlMedia } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Disponibilidade, Documento } from "@/types";
+import CapaLivro from "@/components/CapaLivro";
 
 const ACESSO: Record<string, { texto: string; cor: string; nota: string }> = {
   publico: {
@@ -135,14 +136,9 @@ export default function PaginaDetalhe() {
   return (
     <article className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex flex-col gap-8 md:flex-row">
-        {doc.capa_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={urlMedia(doc.capa_url)}
-            alt={`Capa de ${doc.titulo}`}
-            className="mx-auto h-72 w-52 flex-shrink-0 rounded-lg object-cover shadow-md"
-          />
-        )}
+        <div className="mx-auto h-72 w-52 flex-shrink-0">
+          <CapaLivro doc={doc} className="h-full shadow-md" />
+        </div>
 
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">

@@ -32,16 +32,18 @@ class RepositorioDocumentos:
         self.db.delete(documento)
         self.db.commit()
 
-    def listar(
+    def _aplicar_filtros(
         self,
+        stmt,
         tipo: Optional[TipoDocumento] = None,
         area_id: Optional[int] = None,
         autor_id: Optional[int] = None,
         genero: Optional[str] = None,
-        limite: int = 20,
-        deslocamento: int = 0,
-    ) -> list[Documento]:
-        stmt = select(Documento).where(Documento.estado == EstadoDocumento.publicado)
+        q: Optional[str] = None,
+        autor: Optional[str] = None,
+        ano: Optional[int] = None,
+    ):
+        """Aplica os filtros comuns a `listar` e `contar` (evita duplicação)."""
         if tipo is not None:
             stmt = stmt.where(Documento.tipo == tipo)
         if area_id is not None:
@@ -50,6 +52,33 @@ class RepositorioDocumentos:
             stmt = stmt.where(Documento.autor_id == autor_id)
         if genero is not None:
             stmt = stmt.where(Documento.genero == genero)
+        if q:
+            padrao = f"%{q.strip()}%"
+            stmt = stmt.where(
+                or_(Documento.titulo.ilike(padrao), Documento.resumo.ilike(padrao))
+            )
+        if autor:
+            stmt = stmt.where(Documento.autor_nome.ilike(f"%{autor.strip()}%"))
+        if ano is not None:
+            stmt = stmt.where(Documento.ano_publicacao == ano)
+        return stmt
+
+    def listar(
+        self,
+        tipo: Optional[TipoDocumento] = None,
+        area_id: Optional[int] = None,
+        autor_id: Optional[int] = None,
+        genero: Optional[str] = None,
+        q: Optional[str] = None,
+        autor: Optional[str] = None,
+        ano: Optional[int] = None,
+        limite: int = 20,
+        deslocamento: int = 0,
+    ) -> list[Documento]:
+        stmt = select(Documento).where(Documento.estado == EstadoDocumento.publicado)
+        stmt = self._aplicar_filtros(
+            stmt, tipo, area_id, autor_id, genero, q, autor, ano
+        )
         stmt = stmt.order_by(Documento.created_at.desc()).limit(limite).offset(deslocamento)
         return list(self.db.scalars(stmt).all())
 
@@ -57,17 +86,18 @@ class RepositorioDocumentos:
         self,
         tipo: Optional[TipoDocumento] = None,
         area_id: Optional[int] = None,
+        autor_id: Optional[int] = None,
         genero: Optional[str] = None,
+        q: Optional[str] = None,
+        autor: Optional[str] = None,
+        ano: Optional[int] = None,
     ) -> int:
         stmt = select(func.count()).select_from(Documento).where(
             Documento.estado == EstadoDocumento.publicado
         )
-        if tipo is not None:
-            stmt = stmt.where(Documento.tipo == tipo)
-        if area_id is not None:
-            stmt = stmt.where(Documento.area_id == area_id)
-        if genero is not None:
-            stmt = stmt.where(Documento.genero == genero)
+        stmt = self._aplicar_filtros(
+            stmt, tipo, area_id, autor_id, genero, q, autor, ano
+        )
         return int(self.db.scalar(stmt) or 0)
 
     def contagem_por_area(self) -> dict[int, int]:

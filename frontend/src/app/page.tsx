@@ -1,5 +1,6 @@
 // page.tsx — Página inicial (Home). Apresenta a plataforma e o seu diferencial.
 import Link from "next/link";
+import MontraHome from "@/components/MontraHome";
 
 // Ícones (SVG simples, traço — sem emojis).
 const Icone = {
@@ -154,6 +155,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ---------------- MONTRA DA BIBLIOTECA ---------------- */}
+      <MontraHome />
 
       {/* ---------------- COMO FUNCIONA ---------------- */}
       <section className="mx-auto max-w-6xl px-4 py-16">

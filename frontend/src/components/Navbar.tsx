@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import SinoNotificacoes from "@/components/SinoNotificacoes";
 
 // Ligações visíveis a toda a gente (incluindo visitantes).
 const LIGACOES = [
@@ -59,6 +60,14 @@ export default function Navbar() {
               Favoritos
             </Link>
           )}
+          {utilizador && (
+            <Link
+              href="/historico"
+              className="text-sm font-medium text-gray-600 hover:text-primaria"
+            >
+              Histórico
+            </Link>
+          )}
           {podePublicar && (
             <Link
               href="/publicar"
@@ -80,6 +89,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {utilizador ? (
             <>
+              <SinoNotificacoes />
               <Link href="/dashboard" className="text-sm font-medium text-gray-700 hover:text-primaria">
                 {utilizador.nome.split(" ")[0]}
               </Link>

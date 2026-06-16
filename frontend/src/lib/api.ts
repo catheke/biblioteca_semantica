@@ -6,9 +6,13 @@ import type {
   Disponibilidade,
   Documento,
   Emprestimo,
+  Estatisticas,
   Exemplar,
+  LeituraHistorico,
   Multa,
+  Notificacoes,
   Pagina,
+  PesquisaHistorico,
   RelatorioCirculacao,
   Reserva,
   RespostaSemantica,
@@ -236,4 +240,15 @@ export const api = {
     pedir<Multa>(`/circulation/fines/${multaId}/pay`, { method: "POST" }),
   relatorioCirculacao: () =>
     pedir<RelatorioCirculacao>("/circulation/report"),
+
+  // ---- Histórico, notificações e estatísticas ----
+  historicoLeituras: () => pedir<LeituraHistorico[]>("/history/reading"),
+  historicoPesquisas: () => pedir<PesquisaHistorico[]>("/history/searches"),
+  limparHistorico: () => pedir<void>("/history", { method: "DELETE" }),
+
+  notificacoes: () => pedir<Notificacoes>("/notifications"),
+  marcarNotificacoesVistas: () =>
+    pedir<void>("/notifications/seen", { method: "POST" }),
+
+  estatisticas: () => pedir<Estatisticas>("/stats/overview"),
 };

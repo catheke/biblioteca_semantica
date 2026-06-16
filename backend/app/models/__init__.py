@@ -24,6 +24,12 @@ from app.models.circulacao import (
     EstadoEmprestimo,
     EstadoReserva,
 )
+from app.models.actividade import (
+    HistoricoLeitura,
+    HistoricoPesquisa,
+    Notificacao,
+    MarcadorNotificacao,
+)
 
 __all__ = [
     "Utilizador",
@@ -44,4 +50,8 @@ __all__ = [
     "EstadoExemplar",
     "EstadoEmprestimo",
     "EstadoReserva",
+    "HistoricoLeitura",
+    "HistoricoPesquisa",
+    "Notificacao",
+    "MarcadorNotificacao",
 ]

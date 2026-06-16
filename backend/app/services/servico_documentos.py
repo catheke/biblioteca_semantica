@@ -49,12 +49,31 @@ class ServicoDocumentos:
         area = self.db.get(AreaCientifica, area_id)
         return area.nome if area else None
 
-    def listar(self, tipo=None, area_id=None, genero=None, pagina: int = 1, por_pagina: int = 20):
+    def listar(
+        self,
+        tipo=None,
+        area_id=None,
+        genero=None,
+        q=None,
+        autor=None,
+        ano=None,
+        pagina: int = 1,
+        por_pagina: int = 20,
+    ):
         deslocamento = (pagina - 1) * por_pagina
         itens = self.repo.listar(
-            tipo=tipo, area_id=area_id, genero=genero, limite=por_pagina, deslocamento=deslocamento
+            tipo=tipo,
+            area_id=area_id,
+            genero=genero,
+            q=q,
+            autor=autor,
+            ano=ano,
+            limite=por_pagina,
+            deslocamento=deslocamento,
         )
-        total = self.repo.contar(tipo=tipo, area_id=area_id, genero=genero)
+        total = self.repo.contar(
+            tipo=tipo, area_id=area_id, genero=genero, q=q, autor=autor, ano=ano
+        )
         return itens, total
 
     def seccoes(self) -> list[dict]:
@@ -125,6 +144,8 @@ class ServicoDocumentos:
         # Atribui um IRI semântico estável baseado no id gerado.
         doc.uri_semantica = f"http://basi.ao/recurso/documento/doc{doc.id}"
         doc = self.repo.actualizar(doc)
+        # Aviso global para os leitores (novo documento disponível).
+        self._notificar_novo_documento(doc)
         # PASSO SEMÂNTICO (produção): aqui inserir-se-iam os triplos no Fuseki via
         # SPARQL UPDATE (titulo, temAutor, temTema...). Mantido como nota para
         # não acoplar a escrita de testes locais ao serviço RDF.
@@ -242,10 +263,24 @@ class ServicoDocumentos:
         doc.uri_semantica = f"http://basi.ao/recurso/documento/doc{doc.id}"
         doc = self.repo.actualizar(doc)
 
+        # Aviso global para os leitores (novo documento disponível).
+        self._notificar_novo_documento(doc)
+
         # PASSO SEMÂNTICO: escreve os triplos no grafo RDF para que o documento
         # passe a ser encontrável pela pesquisa semântica e pelo SPARQL.
         self._sincronizar_rdf(doc, tema)
         return doc
+
+    def _notificar_novo_documento(self, doc: Documento) -> None:
+        """Cria um aviso global a anunciar a chegada de um novo documento."""
+        try:
+            from app.services.servico_actividade import ServicoActividade
+
+            ServicoActividade(self.db).criar_notificacao(
+                f"Novo documento disponível: {doc.titulo}", documento_id=doc.id
+            )
+        except Exception:  # noqa: BLE001 — o aviso nunca deve partir a publicação
+            pass
 
     def _sincronizar_rdf(self, doc: Documento, tema: Optional[str] = None) -> None:
         """Reflecte o documento no grafo RDF (não rebenta se o motor falhar)."""

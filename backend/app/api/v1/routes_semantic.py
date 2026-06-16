@@ -9,9 +9,16 @@ ontologia declara estas relações de subtema (propriedade transitiva).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from typing import Optional
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.deps import obter_utilizador_opcional
+from app.models.user import Utilizador
 from app.schemas.search import RespostaPesquisaSemantica, ResultadoPesquisa
+from app.services.servico_actividade import ServicoActividade
 from app.services.servico_semantico import servico_semantico
 
 router = APIRouter()
@@ -20,8 +27,12 @@ router = APIRouter()
 @router.get("", response_model=RespostaPesquisaSemantica)
 def pesquisa_semantica(
     q: str = Query(..., min_length=2, description="Tema a procurar (ex.: 'Inteligência Artificial')."),
+    utilizador: Optional[Utilizador] = Depends(obter_utilizador_opcional),
+    db: Session = Depends(get_db),
 ):
     termo = q.strip()
+    if utilizador is not None:
+        ServicoActividade(db).registar_pesquisa(utilizador.id, termo, semantica=True)
 
     # 1) Expande o termo para o(s) tema(s) correspondente(s) e seus subtemas.
     termos_expandidos = servico_semantico.expandir_termo(termo)
