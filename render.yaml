@@ -51,6 +51,11 @@ services:
       # Semeia a BD e carrega a ontologia no Fuseki no primeiro arranque.
       - key: BOOTSTRAP_ON_STARTUP
         value: "1"
+      # No plano gratuito o disco é efémero e a descarga dos livros no arranque
+      # atrasaria o serviço; semeamos só os metadados. O catálogo e a pesquisa
+      # semântica funcionam na mesma. Pôr "1" se associar um disco persistente.
+      - key: SEED_DOWNLOAD_LIVROS
+        value: "0"
       # URL do PostgreSQL gerido (o config.py normaliza o esquema para psycopg).
       - key: DATABASE_URL
         fromDatabase:

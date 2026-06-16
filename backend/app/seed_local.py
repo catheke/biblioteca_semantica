@@ -17,6 +17,7 @@ EXECUTAR (a partir da pasta backend/, com o venv activo):
 """
 from __future__ import annotations
 
+import os
 import urllib.request
 
 from app.core.database import SessionLocal, init_db
@@ -172,8 +173,15 @@ def executar() -> None:
         # Texto integral é descarregado e CONVERTIDO num PDF de leitura:
         #   storage/livros/{id}.pdf  (página de rosto + corpo paginado)
         # Capa (.jpg)              -> storage/capas/{id}.jpg
-        print("A descarregar e a gerar os livros em PDF para storage/ ...")
-        for doc, id_g in zip(docs_livros, ids_gutenberg):
+        #
+        # Pode ser DESLIGADO com SEED_DOWNLOAD_LIVROS=0 — útil em alojamentos
+        # gratuitos (ex.: Render) onde o disco é efémero e a descarga no arranque
+        # atrasaria o serviço. Sem os ficheiros, o catálogo e a pesquisa semântica
+        # funcionam na mesma; apenas a descarga das obras fica indisponível.
+        descarregar = os.getenv("SEED_DOWNLOAD_LIVROS", "1") not in ("0", "false", "False")
+        if not descarregar:
+            print("SEED_DOWNLOAD_LIVROS=0 — a saltar a descarga dos livros (só metadados).")
+        for doc, id_g in zip(docs_livros, ids_gutenberg if descarregar else []):
             url_txt = f"https://www.gutenberg.org/cache/epub/{id_g}/pg{id_g}.txt"
             origem_txt = caminho_livro(f"{doc.id}.txt")  # texto-fonte (intermédio)
             destino_pdf = caminho_livro(f"{doc.id}.pdf")
