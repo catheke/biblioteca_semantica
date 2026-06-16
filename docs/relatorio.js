@@ -20,7 +20,7 @@ const CONTENT_W = 9360; // US Letter, margens de 1 polegada
 // ---------- helpers ----------
 const P = (text, opts = {}) =>
   new Paragraph({
-    spacing: { after: 120, line: 276 },
+    spacing: { after: 120, line: 360 },
     alignment: opts.align ?? AlignmentType.JUSTIFIED,
     children: [new TextRun({ text, ...opts })],
   });
@@ -33,14 +33,14 @@ const H2 = (text) =>
 const bullet = (text) =>
   new Paragraph({
     numbering: { reference: "lista", level: 0 },
-    spacing: { after: 60 },
+    spacing: { after: 60, line: 360 },
     children: typeof text === "string" ? [new TextRun(text)] : text,
   });
 
 const num = (text) =>
   new Paragraph({
     numbering: { reference: "numerada", level: 0 },
-    spacing: { after: 60 },
+    spacing: { after: 60, line: 360 },
     children: typeof text === "string" ? [new TextRun(text)] : text,
   });
 
