@@ -426,6 +426,19 @@ const corpo = [
   num("UDC Consortium. Universal Decimal Classification (CDU) — Outline. Disponível em udcc.org."),
 ];
 
+// ---------- Rodapés ----------
+// Rodapé vazio (capa). Rodapé com número de página simples e centrado.
+const rodapeVazio = () =>
+  new Footer({ children: [new Paragraph({ children: [] })] });
+const rodapeNumero = () =>
+  new Footer({
+    children: [new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 120 },
+      children: [new TextRun({ children: [PageNumber.CURRENT], size: 24, color: "000000" })],
+    })],
+  });
+
 // ---------- Documento ----------
 const doc = new Document({
   styles: {
@@ -448,30 +461,30 @@ const doc = new Document({
     ],
   },
   sections: [
-    // Secção 1 — parte pré-textual (capa, epígrafe, organograma, índice): sem
-    // numeração de página.
+    // Secção 1 — parte pré-textual. A capa (1.ª página) não mostra número;
+    // as restantes páginas mostram um número de página simples e centrado.
     {
-      properties: { page: {
-        size: { width: 12240, height: 15840 },
-        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-      } },
-      footers: { default: new Footer({ children: [new Paragraph({ children: [] })] }) },
+      properties: {
+        titlePage: true,
+        page: {
+          size: { width: 12240, height: 15840 },
+          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+        },
+      },
+      footers: {
+        first: rodapeVazio(),
+        default: rodapeNumero(),
+      },
       children: [...capa, ...epigrafe, ...organograma, ...indice],
     },
-    // Secção 2 — corpo do relatório: a numeração de páginas RECOMEÇA em 1 a
-    // partir da Introdução.
+    // Secção 2 — corpo do relatório. A numeração continua de forma contínua,
+    // com o mesmo rodapé de número simples e centrado.
     {
       properties: { page: {
         size: { width: 12240, height: 15840 },
         margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-        pageNumbers: { start: 1 },
       } },
-      footers: { default: new Footer({ children: [new Paragraph({
-        alignment: AlignmentType.CENTER,
-        border: { top: { style: BorderStyle.SINGLE, size: 4, color: "BFBFBF", space: 6 } },
-        children: [new TextRun({ text: "BASI — Semantic Academic Hub      Página ", size: 20, color: "404040" }),
-          new TextRun({ children: [PageNumber.CURRENT], size: 20, bold: true, color: "1F3864" })],
-      })] }) },
+      footers: { default: rodapeNumero() },
       children: [...corpo],
     },
   ],
