@@ -45,6 +45,16 @@ def _semear_base_dados() -> None:
         logger.warning("Bootstrap da base de dados falhou (continua): %s", erro)
 
 
+def _semear_livros_em_falta() -> None:
+    """Acrescenta livros novos do catálogo a uma base já povoada (idempotente)."""
+    try:
+        from app import seed_local
+
+        seed_local.semear_livros_em_falta()
+    except Exception as erro:  # noqa: BLE001
+        logger.warning("Bootstrap de livros em falta falhou (continua): %s", erro)
+
+
 def _semear_circulacao() -> None:
     """Popula a circulação (exemplares/empréstimos/reservas/multas), idempotente."""
     try:
@@ -108,6 +118,7 @@ def executar() -> None:
     """Corre o bootstrap completo (semear BD + carregar Fuseki)."""
     logger.info("Bootstrap de arranque iniciado.")
     _semear_base_dados()
+    _semear_livros_em_falta()
     _semear_circulacao()
     _carregar_fuseki()
     logger.info("Bootstrap de arranque concluído.")

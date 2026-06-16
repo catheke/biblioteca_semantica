@@ -61,6 +61,91 @@ def _baixar(url: str, destino) -> bool:
         return False
 
 
+# --- Catálogo de livros de domínio público (Project Gutenberg) --------------
+# Tuplo: (id_gutenberg, titulo, autor, codigo_cdu, idioma, ano, nivel, genero).
+# `codigo_cdu` identifica a SECÇÃO (área) e `genero` só se aplica à Literatura.
+# Mantido ao nível do módulo para que tanto o seed inicial (`executar`) como o
+# seed aditivo (`semear_livros_em_falta`) partilhem a MESMA lista.
+CATALOGO: list[tuple] = [
+    # Literatura — clássicos em português
+    (55752, "Dom Casmurro", "Machado de Assis", "82", "Português", 1899, NivelAcesso.publico, "Romance"),
+    (54829, "Memórias Póstumas de Brás Cubas", "Machado de Assis", "82", "Português", 1881, NivelAcesso.publico, "Romance"),
+    (53101, "A Mão e a Luva", "Machado de Assis", "82", "Português", 1874, NivelAcesso.publico, "Romance"),
+    (3333, "Os Lusíadas", "Luís de Camões", "82", "Português", 1572, NivelAcesso.publico, "Poesia"),
+    (16384, "O Mandarim", "Eça de Queirós", "82", "Português", 1880, NivelAcesso.publico, "Romance"),
+    (67724, "O Guarani", "José de Alencar", "82", "Português", 1857, NivelAcesso.publico, "Romance"),
+    (27364, "A Filha do Arcediago", "Camilo Castelo Branco", "82", "Português", 1854, NivelAcesso.autenticado, "Romance"),
+    # Literatura — clássicos internacionais
+    (1342, "Pride and Prejudice", "Jane Austen", "82", "Inglês", 1813, NivelAcesso.publico, "Romance"),
+    (996, "Don Quixote", "Miguel de Cervantes", "82", "Espanhol", 1605, NivelAcesso.publico, "Romance"),
+    (2554, "Crime and Punishment", "Fiódor Dostoiévski", "82", "Inglês", 1866, NivelAcesso.autenticado, "Romance"),
+    (64317, "The Great Gatsby", "F. Scott Fitzgerald", "82", "Inglês", 1925, NivelAcesso.autenticado, "Romance"),
+    (1661, "The Adventures of Sherlock Holmes", "Arthur Conan Doyle", "82", "Inglês", 1892, NivelAcesso.publico, "Conto"),
+    (84, "Frankenstein", "Mary Shelley", "82", "Inglês", 1818, NivelAcesso.publico, "Romance"),
+    (11, "Alice's Adventures in Wonderland", "Lewis Carroll", "82", "Inglês", 1865, NivelAcesso.publico, "Romance"),
+    (174, "The Picture of Dorian Gray", "Oscar Wilde", "82", "Inglês", 1890, NivelAcesso.publico, "Romance"),
+    (345, "Dracula", "Bram Stoker", "82", "Inglês", 1897, NivelAcesso.publico, "Romance"),
+    (1260, "Jane Eyre", "Charlotte Brontë", "82", "Inglês", 1847, NivelAcesso.publico, "Romance"),
+    (768, "Wuthering Heights", "Emily Brontë", "82", "Inglês", 1847, NivelAcesso.autenticado, "Romance"),
+    (98, "A Tale of Two Cities", "Charles Dickens", "82", "Inglês", 1859, NivelAcesso.publico, "Romance"),
+    (1400, "Great Expectations", "Charles Dickens", "82", "Inglês", 1861, NivelAcesso.publico, "Romance"),
+    (2701, "Moby Dick", "Herman Melville", "82", "Inglês", 1851, NivelAcesso.autenticado, "Romance"),
+    (1184, "The Count of Monte Cristo", "Alexandre Dumas", "82", "Inglês", 1844, NivelAcesso.publico, "Romance"),
+    (74, "The Adventures of Tom Sawyer", "Mark Twain", "82", "Inglês", 1876, NivelAcesso.publico, "Romance"),
+    (76, "Adventures of Huckleberry Finn", "Mark Twain", "82", "Inglês", 1884, NivelAcesso.publico, "Romance"),
+    (16, "Peter Pan", "J. M. Barrie", "82", "Inglês", 1911, NivelAcesso.publico, "Romance"),
+    (5200, "A Metamorfose", "Franz Kafka", "82", "Inglês", 1915, NivelAcesso.publico, "Conto"),
+    (1952, "The Yellow Wallpaper", "Charlotte Perkins Gilman", "82", "Inglês", 1892, NivelAcesso.publico, "Conto"),
+    (2591, "Contos de Grimm", "Irmãos Grimm", "82", "Inglês", 1812, NivelAcesso.publico, "Conto"),
+    (1727, "The Odyssey", "Homero", "82", "Inglês", None, NivelAcesso.autenticado, "Poesia"),
+    (6130, "The Iliad", "Homero", "82", "Inglês", None, NivelAcesso.autenticado, "Poesia"),
+    (1322, "Leaves of Grass", "Walt Whitman", "82", "Inglês", 1855, NivelAcesso.publico, "Poesia"),
+    (1524, "Hamlet", "William Shakespeare", "82", "Inglês", 1603, NivelAcesso.publico, "Teatro"),
+    (1513, "Romeu e Julieta", "William Shakespeare", "82", "Inglês", 1597, NivelAcesso.publico, "Teatro"),
+    # Filosofia
+    (1497, "The Republic", "Platão", "1", "Inglês", None, NivelAcesso.academico, None),
+    (1232, "The Prince", "Nicolau Maquiavel", "1", "Inglês", 1532, NivelAcesso.publico, None),
+    (2680, "Meditations", "Marco Aurélio", "1", "Inglês", None, NivelAcesso.publico, None),
+    (1998, "Thus Spake Zarathustra", "Friedrich Nietzsche", "1", "Inglês", 1883, NivelAcesso.academico, None),
+    (4363, "Beyond Good and Evil", "Friedrich Nietzsche", "1", "Inglês", 1886, NivelAcesso.academico, None),
+    (1080, "A Modest Proposal", "Jonathan Swift", "1", "Inglês", 1729, NivelAcesso.publico, None),
+    # Ciência
+    (1228, "On the Origin of Species", "Charles Darwin", "5", "Inglês", 1859, NivelAcesso.academico, None),
+    (5001, "Relativity: The Special and General Theory", "Albert Einstein", "5", "Inglês", 1916, NivelAcesso.academico, None),
+    (37729, "Treatise on Light", "Christiaan Huygens", "5", "Inglês", 1690, NivelAcesso.academico, None),
+    (33283, "The Principles of Chemistry", "Dmitri Mendeleev", "5", "Inglês", 1868, NivelAcesso.academico, None),
+]
+
+
+def _descarregar_ficheiros(doc: Documento, id_g: int, descarregar: bool) -> None:
+    """
+    Descarrega o PDF de leitura e a capa do livro Gutenberg `id_g` para o
+    documento `doc` (idempotente). Respeita SEED_DOWNLOAD_LIVROS via `descarregar`.
+    """
+    if not descarregar:
+        return
+    url_txt = f"https://www.gutenberg.org/cache/epub/{id_g}/pg{id_g}.txt"
+    origem_txt = caminho_livro(f"{doc.id}.txt")  # texto-fonte (intermédio)
+    destino_pdf = caminho_livro(f"{doc.id}.pdf")
+    if destino_pdf.exists() and destino_pdf.stat().st_size > 0:
+        # Já temos o PDF de leitura (ex.: re-seed) — não voltar a descarregar.
+        doc.ficheiro_objecto = f"{doc.id}.pdf"
+    elif _baixar(url_txt, origem_txt):
+        if txt_para_pdf(origem_txt, destino_pdf, doc.titulo, doc.autor_nome or ""):
+            doc.ficheiro_objecto = f"{doc.id}.pdf"
+        # Remove o texto-fonte; ficamos só com o PDF de leitura.
+        try:
+            origem_txt.unlink()
+        except OSError:
+            pass
+
+    url_capa_g = f"https://www.gutenberg.org/cache/epub/{id_g}/pg{id_g}.cover.medium.jpg"
+    nome_capa = f"{doc.id}.jpg"
+    if _baixar(url_capa_g, caminho_capa(nome_capa)):
+        doc.capa_url = url_capa(nome_capa)
+    print(f"  · {doc.titulo[:40]:40s} -> pdf={'ok' if doc.ficheiro_objecto else '—'} capa={'ok' if doc.capa_url else '—'}")
+
+
 def executar() -> None:
     init_db()
     db = SessionLocal()
@@ -124,58 +209,18 @@ def executar() -> None:
             Documento(titulo="Ética e Aprendizagem por Reforço", resumo="Agentes autónomos, recompensas e ética da IA.", tipo=TipoDocumento.material_didactico, ano_publicacao=2024, autor_id=adriano.id, area_id=informatica.id, autor_nome="Adriano De Júlio", nivel_acesso=NivelAcesso.publico),
         ]
 
-        # Livros de domínio público (Project Gutenberg), com capa e ligação para
-        # leitura/descarga e níveis de acesso variados.
-        # Tuplo: (id_gutenberg, titulo, autor, area, idioma, ano, nivel, genero).
-        # `genero` só se aplica à Literatura; nas outras secções fica None.
+        # Livros de domínio público (Project Gutenberg) — ver constante CATALOGO
+        # no topo do módulo. Aqui mapeamos o código da CDU para a área criada.
+        area_por_codigo = {
+            "0": informatica,
+            "1": filosofia,
+            "5": ciencia,
+            "6": medicina,
+            "82": literatura,
+        }
         catalogo = [
-            # Literatura — clássicos em português
-            (55752, "Dom Casmurro", "Machado de Assis", literatura, "Português", 1899, NivelAcesso.publico, "Romance"),
-            (54829, "Memórias Póstumas de Brás Cubas", "Machado de Assis", literatura, "Português", 1881, NivelAcesso.publico, "Romance"),
-            (53101, "A Mão e a Luva", "Machado de Assis", literatura, "Português", 1874, NivelAcesso.publico, "Romance"),
-            (3333, "Os Lusíadas", "Luís de Camões", literatura, "Português", 1572, NivelAcesso.publico, "Poesia"),
-            (16384, "O Mandarim", "Eça de Queirós", literatura, "Português", 1880, NivelAcesso.publico, "Romance"),
-            (67724, "O Guarani", "José de Alencar", literatura, "Português", 1857, NivelAcesso.publico, "Romance"),
-            (27364, "A Filha do Arcediago", "Camilo Castelo Branco", literatura, "Português", 1854, NivelAcesso.autenticado, "Romance"),
-            # Literatura — clássicos internacionais
-            (1342, "Pride and Prejudice", "Jane Austen", literatura, "Inglês", 1813, NivelAcesso.publico, "Romance"),
-            (996, "Don Quixote", "Miguel de Cervantes", literatura, "Espanhol", 1605, NivelAcesso.publico, "Romance"),
-            (2554, "Crime and Punishment", "Fiódor Dostoiévski", literatura, "Inglês", 1866, NivelAcesso.autenticado, "Romance"),
-            (64317, "The Great Gatsby", "F. Scott Fitzgerald", literatura, "Inglês", 1925, NivelAcesso.autenticado, "Romance"),
-            (1661, "The Adventures of Sherlock Holmes", "Arthur Conan Doyle", literatura, "Inglês", 1892, NivelAcesso.publico, "Conto"),
-            (84, "Frankenstein", "Mary Shelley", literatura, "Inglês", 1818, NivelAcesso.publico, "Romance"),
-            (11, "Alice's Adventures in Wonderland", "Lewis Carroll", literatura, "Inglês", 1865, NivelAcesso.publico, "Romance"),
-            (174, "The Picture of Dorian Gray", "Oscar Wilde", literatura, "Inglês", 1890, NivelAcesso.publico, "Romance"),
-            (345, "Dracula", "Bram Stoker", literatura, "Inglês", 1897, NivelAcesso.publico, "Romance"),
-            (1260, "Jane Eyre", "Charlotte Brontë", literatura, "Inglês", 1847, NivelAcesso.publico, "Romance"),
-            (768, "Wuthering Heights", "Emily Brontë", literatura, "Inglês", 1847, NivelAcesso.autenticado, "Romance"),
-            (98, "A Tale of Two Cities", "Charles Dickens", literatura, "Inglês", 1859, NivelAcesso.publico, "Romance"),
-            (1400, "Great Expectations", "Charles Dickens", literatura, "Inglês", 1861, NivelAcesso.publico, "Romance"),
-            (2701, "Moby Dick", "Herman Melville", literatura, "Inglês", 1851, NivelAcesso.autenticado, "Romance"),
-            (1184, "The Count of Monte Cristo", "Alexandre Dumas", literatura, "Inglês", 1844, NivelAcesso.publico, "Romance"),
-            (74, "The Adventures of Tom Sawyer", "Mark Twain", literatura, "Inglês", 1876, NivelAcesso.publico, "Romance"),
-            (76, "Adventures of Huckleberry Finn", "Mark Twain", literatura, "Inglês", 1884, NivelAcesso.publico, "Romance"),
-            (16, "Peter Pan", "J. M. Barrie", literatura, "Inglês", 1911, NivelAcesso.publico, "Romance"),
-            (5200, "A Metamorfose", "Franz Kafka", literatura, "Inglês", 1915, NivelAcesso.publico, "Conto"),
-            (1952, "The Yellow Wallpaper", "Charlotte Perkins Gilman", literatura, "Inglês", 1892, NivelAcesso.publico, "Conto"),
-            (2591, "Contos de Grimm", "Irmãos Grimm", literatura, "Inglês", 1812, NivelAcesso.publico, "Conto"),
-            (1727, "The Odyssey", "Homero", literatura, "Inglês", None, NivelAcesso.autenticado, "Poesia"),
-            (6130, "The Iliad", "Homero", literatura, "Inglês", None, NivelAcesso.autenticado, "Poesia"),
-            (1322, "Leaves of Grass", "Walt Whitman", literatura, "Inglês", 1855, NivelAcesso.publico, "Poesia"),
-            (1524, "Hamlet", "William Shakespeare", literatura, "Inglês", 1603, NivelAcesso.publico, "Teatro"),
-            (1513, "Romeu e Julieta", "William Shakespeare", literatura, "Inglês", 1597, NivelAcesso.publico, "Teatro"),
-            # Filosofia
-            (1497, "The Republic", "Platão", filosofia, "Inglês", None, NivelAcesso.academico, None),
-            (1232, "The Prince", "Nicolau Maquiavel", filosofia, "Inglês", 1532, NivelAcesso.publico, None),
-            (2680, "Meditations", "Marco Aurélio", filosofia, "Inglês", None, NivelAcesso.publico, None),
-            (1998, "Thus Spake Zarathustra", "Friedrich Nietzsche", filosofia, "Inglês", 1883, NivelAcesso.academico, None),
-            (4363, "Beyond Good and Evil", "Friedrich Nietzsche", filosofia, "Inglês", 1886, NivelAcesso.academico, None),
-            (1080, "A Modest Proposal", "Jonathan Swift", filosofia, "Inglês", 1729, NivelAcesso.publico, None),
-            # Ciência
-            (1228, "On the Origin of Species", "Charles Darwin", ciencia, "Inglês", 1859, NivelAcesso.academico, None),
-            (5001, "Relativity: The Special and General Theory", "Albert Einstein", ciencia, "Inglês", 1916, NivelAcesso.academico, None),
-            (37729, "Treatise on Light", "Christiaan Huygens", ciencia, "Inglês", 1690, NivelAcesso.academico, None),
-            (33283, "The Principles of Chemistry", "Dmitri Mendeleev", ciencia, "Inglês", 1868, NivelAcesso.academico, None),
+            (id_g, titulo, autor, area_por_codigo[cod], idioma, ano, nivel, genero)
+            for (id_g, titulo, autor, cod, idioma, ano, nivel, genero) in CATALOGO
         ]
 
         # Distribui os livros pelos professores/investigador como "quem publicou".
@@ -215,27 +260,8 @@ def executar() -> None:
         descarregar = os.getenv("SEED_DOWNLOAD_LIVROS", "1") not in ("0", "false", "False")
         if not descarregar:
             print("SEED_DOWNLOAD_LIVROS=0 — a saltar a descarga dos livros (só metadados).")
-        for doc, id_g in zip(docs_livros, ids_gutenberg if descarregar else []):
-            url_txt = f"https://www.gutenberg.org/cache/epub/{id_g}/pg{id_g}.txt"
-            origem_txt = caminho_livro(f"{doc.id}.txt")  # texto-fonte (intermédio)
-            destino_pdf = caminho_livro(f"{doc.id}.pdf")
-            if destino_pdf.exists() and destino_pdf.stat().st_size > 0:
-                # Já temos o PDF de leitura (ex.: re-seed) — não voltar a descarregar.
-                doc.ficheiro_objecto = f"{doc.id}.pdf"
-            elif _baixar(url_txt, origem_txt):
-                if txt_para_pdf(origem_txt, destino_pdf, doc.titulo, doc.autor_nome or ""):
-                    doc.ficheiro_objecto = f"{doc.id}.pdf"
-                # Remove o texto-fonte; ficamos só com o PDF de leitura.
-                try:
-                    origem_txt.unlink()
-                except OSError:
-                    pass
-
-            url_capa_g = f"https://www.gutenberg.org/cache/epub/{id_g}/pg{id_g}.cover.medium.jpg"
-            nome_capa = f"{doc.id}.jpg"
-            if _baixar(url_capa_g, caminho_capa(nome_capa)):
-                doc.capa_url = url_capa(nome_capa)
-            print(f"  · {doc.titulo[:40]:40s} -> pdf={'ok' if doc.ficheiro_objecto else '—'} capa={'ok' if doc.capa_url else '—'}")
+        for doc, id_g in zip(docs_livros, ids_gutenberg):
+            _descarregar_ficheiros(doc, id_g, descarregar)
 
         # --- Rede social (favoritos e seguidores de demonstração) ---
         db.add_all([
@@ -250,6 +276,74 @@ def executar() -> None:
         print(f"Seed concluído: 5 utilizadores, {len(docs)} documentos "
               f"({len(docs_livros)} livros reais), 5 secções CDU, 6 temas.")
         print("Login de demonstração -> email: admin@basi.ao | palavra-passe: password123")
+    finally:
+        db.close()
+
+
+def semear_livros_em_falta() -> None:
+    """
+    Acrescenta ao catálogo os livros de domínio público (CATALOGO) que ainda NÃO
+    existam na base de dados — de forma IDEMPOTENTE.
+
+    Ao contrário de `executar()` (que só popula uma base VAZIA), esta função corre
+    SEMPRE e serve para introduzir livros NOVOS em bases já povoadas — por exemplo,
+    em produção, após um deploy que traga obras adicionais. A comparação é feita
+    pelo título, pelo que livros já presentes nunca são duplicados.
+    """
+    init_db()
+    db = SessionLocal()
+    try:
+        areas = {a.codigo: a for a in db.query(AreaCientifica).all()}
+        publicadores = [
+            db.query(Utilizador).filter(Utilizador.email == email).first()
+            for email in ("adriano@basi.ao", "filipe@basi.ao", "pedro@basi.ao")
+        ]
+        publicadores = [p for p in publicadores if p is not None]
+        # Sem áreas nem publicadores a base ainda não foi semeada; nada a fazer
+        # (o seed inicial trata da primeira população).
+        if not areas or not publicadores:
+            return
+
+        existentes = {titulo for (titulo,) in db.query(Documento.titulo).all()}
+        descarregar = os.getenv("SEED_DOWNLOAD_LIVROS", "1") not in ("0", "false", "False")
+
+        novos: list[Documento] = []
+        novos_ids_g: list[int] = []
+        i = 0
+        for (id_g, titulo, autor, cod, idioma, ano, nivel, genero) in CATALOGO:
+            if titulo in existentes:
+                continue
+            area = areas.get(cod)
+            if area is None:
+                continue
+            novos.append(Documento(
+                titulo=titulo,
+                resumo=f"Obra de {autor}. Texto integral de domínio público.",
+                tipo=TipoDocumento.livro,
+                ano_publicacao=ano,
+                idioma=idioma,
+                autor_id=publicadores[i % len(publicadores)].id,
+                area_id=area.id,
+                autor_nome=autor,
+                genero=genero,
+                nivel_acesso=nivel,
+            ))
+            novos_ids_g.append(id_g)
+            i += 1
+
+        if not novos:
+            print("Catálogo já actualizado — nenhum livro novo a acrescentar.")
+            return
+
+        db.add_all(novos)
+        db.flush()
+        for d in novos:
+            d.uri_semantica = f"http://basi.ao/recurso/documento/doc{d.id}"
+        for doc, id_g in zip(novos, novos_ids_g):
+            _descarregar_ficheiros(doc, id_g, descarregar)
+
+        db.commit()
+        print(f"Acrescentados {len(novos)} livros novos ao catálogo.")
     finally:
         db.close()
 
