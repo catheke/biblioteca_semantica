@@ -21,7 +21,7 @@ const CONTENT_W = 9360; // US Letter, margens de 1 polegada
 const P = (text, opts = {}) =>
   new Paragraph({
     spacing: { after: 120, line: 276 },
-    alignment: opts.align,
+    alignment: opts.align ?? AlignmentType.JUSTIFIED,
     children: [new TextRun({ text, ...opts })],
   });
 
@@ -429,13 +429,13 @@ const corpo = [
 // ---------- Documento ----------
 const doc = new Document({
   styles: {
-    default: { document: { run: { font: "Arial", size: 22 } } },
+    default: { document: { run: { font: "Times New Roman", size: 24 } } },
     paragraphStyles: [
       { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
-        run: { size: 30, bold: true, font: "Arial", color: "1F3864" },
+        run: { size: 32, bold: true, font: "Times New Roman", color: "1F3864" },
         paragraph: { spacing: { before: 280, after: 160 }, outlineLevel: 0 } },
       { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
-        run: { size: 25, bold: true, font: "Arial", color: "2E5496" },
+        run: { size: 26, bold: true, font: "Times New Roman", color: "2E5496" },
         paragraph: { spacing: { before: 200, after: 120 }, outlineLevel: 1 } },
     ],
   },
