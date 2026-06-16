@@ -15,6 +15,15 @@ from app.models.academic import (
 )
 from app.models.document import Documento
 from app.models.social import Favorito, Seguidor
+from app.models.circulacao import (
+    Exemplar,
+    Emprestimo,
+    Reserva,
+    Multa,
+    EstadoExemplar,
+    EstadoEmprestimo,
+    EstadoReserva,
+)
 
 __all__ = [
     "Utilizador",
@@ -28,4 +37,11 @@ __all__ = [
     "Documento",
     "Favorito",
     "Seguidor",
+    "Exemplar",
+    "Emprestimo",
+    "Reserva",
+    "Multa",
+    "EstadoExemplar",
+    "EstadoEmprestimo",
+    "EstadoReserva",
 ]

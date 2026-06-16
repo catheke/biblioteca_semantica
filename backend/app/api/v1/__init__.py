@@ -14,6 +14,7 @@ from app.api.v1 import (
     routes_semantic,
     routes_recommendations,
     routes_sparql,
+    routes_circulacao,
 )
 
 api_router = APIRouter()
@@ -28,3 +29,6 @@ api_router.include_router(
     routes_recommendations.router, prefix="/recommendations", tags=["Recomendações"]
 )
 api_router.include_router(routes_sparql.router, prefix="/sparql", tags=["SPARQL"])
+api_router.include_router(
+    routes_circulacao.router, prefix="/circulation", tags=["Circulação"]
+)

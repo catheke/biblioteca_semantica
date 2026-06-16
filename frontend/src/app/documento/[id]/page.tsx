@@ -1,10 +1,11 @@
 "use client";
 // documento/[id]/page.tsx — Detalhe de um documento + leitura/descarga + favorito.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, urlMedia } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { Documento } from "@/types";
+import type { Disponibilidade, Documento } from "@/types";
 
 const ACESSO: Record<string, { texto: string; cor: string; nota: string }> = {
   publico: {
@@ -34,9 +35,59 @@ export default function PaginaDetalhe() {
   const [aDescarregar, setADescarregar] = useState(false);
   const [avisoAcesso, setAvisoAcesso] = useState("");
 
+  // Circulação física: disponibilidade e acções de requisitar/reservar.
+  const [disp, setDisp] = useState<Disponibilidade | null>(null);
+  const [aProcessar, setAProcessar] = useState(false);
+  const [msgCirc, setMsgCirc] = useState("");
+  const [erroCirc, setErroCirc] = useState("");
+
   useEffect(() => {
     api.obterDocumento(id).then(setDoc).catch((e) => setErro(e.message));
   }, [id]);
+
+  const carregarDisp = useCallback(() => {
+    api.disponibilidade(id).then(setDisp).catch(() => setDisp(null));
+  }, [id]);
+
+  useEffect(() => {
+    carregarDisp();
+  }, [carregarDisp, utilizador]);
+
+  async function requisitar() {
+    setMsgCirc("");
+    setErroCirc("");
+    setAProcessar(true);
+    try {
+      const emp = await api.requisitar(id);
+      setMsgCirc(
+        `Obra requisitada. Devolva até ${new Date(emp.data_prevista_devolucao).toLocaleDateString("pt-PT")}.`,
+      );
+      carregarDisp();
+    } catch (e) {
+      setErroCirc((e as Error).message);
+    } finally {
+      setAProcessar(false);
+    }
+  }
+
+  async function reservar() {
+    setMsgCirc("");
+    setErroCirc("");
+    setAProcessar(true);
+    try {
+      const r = await api.reservar(id);
+      setMsgCirc(
+        r.posicao
+          ? `Reserva registada. Está na posição ${r.posicao} da fila.`
+          : "Reserva registada.",
+      );
+      carregarDisp();
+    } catch (e) {
+      setErroCirc((e as Error).message);
+    } finally {
+      setAProcessar(false);
+    }
+  }
 
   async function alternarFavorito() {
     if (!utilizador) return;
@@ -142,6 +193,101 @@ export default function PaginaDetalhe() {
 
       {doc.resumo && (
         <p className="mt-8 leading-relaxed text-gray-700">{doc.resumo}</p>
+      )}
+
+      {/* ----------------------- Disponibilidade física ----------------------- */}
+      {disp && disp.total_exemplares > 0 && (
+        <section className="mt-10 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Requisição na biblioteca
+          </h2>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span
+              className={`chip ${
+                disp.disponiveis > 0
+                  ? "bg-green-50 text-green-700"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
+              {disp.disponiveis > 0
+                ? `${disp.disponiveis} de ${disp.total_exemplares} disponíveis`
+                : "Todos os exemplares emprestados"}
+            </span>
+            {disp.reservas_em_espera > 0 && (
+              <span className="chip bg-amber-50 text-dourado">
+                {disp.reservas_em_espera} em lista de espera
+              </span>
+            )}
+          </div>
+
+          {/* Estado pessoal do leitor */}
+          {disp.ja_tem_emprestimo && (
+            <p className="mt-3 text-sm text-gray-600">
+              Já tem esta obra requisitada. Veja em{" "}
+              <Link href="/emprestimos" className="text-primaria hover:underline">
+                A minha biblioteca
+              </Link>
+              .
+            </p>
+          )}
+          {disp.ja_reservou && (
+            <p className="mt-3 text-sm text-gray-600">
+              Já tem uma reserva activa para esta obra.
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            {!utilizador ? (
+              <Link href="/login" className="btn-primario">
+                Inicie sessão para requisitar
+              </Link>
+            ) : (
+              <>
+                {disp.pode_requisitar && (
+                  <button
+                    onClick={requisitar}
+                    disabled={aProcessar}
+                    className="btn-primario disabled:opacity-50"
+                  >
+                    {aProcessar ? "A processar…" : "Requisitar"}
+                  </button>
+                )}
+                {disp.pode_reservar && (
+                  <button
+                    onClick={reservar}
+                    disabled={aProcessar}
+                    className="btn-secundario disabled:opacity-50"
+                  >
+                    {aProcessar ? "A processar…" : "Reservar (entrar na fila)"}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Motivo quando não pode requisitar nem reservar */}
+          {utilizador &&
+            !disp.pode_requisitar &&
+            !disp.pode_reservar &&
+            !disp.ja_tem_emprestimo &&
+            !disp.ja_reservou &&
+            disp.motivo && (
+              <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-dourado">
+                {disp.motivo}
+              </p>
+            )}
+
+          {msgCirc && (
+            <div className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+              {msgCirc}
+            </div>
+          )}
+          {erroCirc && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {erroCirc}
+            </div>
+          )}
+        </section>
       )}
     </article>
   );

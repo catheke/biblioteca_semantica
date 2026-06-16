@@ -45,6 +45,14 @@ export default function Navbar() {
           ))}
           {utilizador && (
             <Link
+              href="/emprestimos"
+              className="text-sm font-medium text-gray-600 hover:text-primaria"
+            >
+              Empréstimos
+            </Link>
+          )}
+          {utilizador && (
+            <Link
               href="/favoritos"
               className="text-sm font-medium text-gray-600 hover:text-primaria"
             >

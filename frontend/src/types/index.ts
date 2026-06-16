@@ -92,3 +92,94 @@ export interface Tokens {
   refresh_token: string;
   token_type: string;
 }
+
+// ---- Circulação (gestão bibliotecária) ----
+export type EstadoExemplar =
+  | "disponivel"
+  | "emprestado"
+  | "reservado"
+  | "manutencao"
+  | "perdido";
+
+export type EstadoEmprestimo = "activo" | "devolvido" | "atrasado";
+
+export type EstadoReserva = "activa" | "atendida" | "cancelada" | "expirada";
+
+export interface Exemplar {
+  id: number;
+  documento_id: number;
+  numero_registo: string;
+  estado: EstadoExemplar;
+  localizacao?: string | null;
+}
+
+export interface Disponibilidade {
+  documento_id: number;
+  total_exemplares: number;
+  disponiveis: number;
+  reservas_em_espera: number;
+  pode_requisitar: boolean;
+  pode_reservar: boolean;
+  ja_tem_emprestimo: boolean;
+  ja_reservou: boolean;
+  motivo?: string | null;
+}
+
+export interface Emprestimo {
+  id: number;
+  exemplar_id: number;
+  utilizador_id: number;
+  data_emprestimo: string;
+  data_prevista_devolucao: string;
+  data_devolucao?: string | null;
+  estado: EstadoEmprestimo;
+  renovacoes: number;
+  documento_id?: number | null;
+  documento_titulo?: string | null;
+  numero_registo?: string | null;
+  leitor_nome?: string | null;
+  dias_em_atraso: number;
+  multa_valor: number;
+}
+
+export interface Reserva {
+  id: number;
+  documento_id: number;
+  utilizador_id: number;
+  data_reserva: string;
+  estado: EstadoReserva;
+  documento_titulo?: string | null;
+  leitor_nome?: string | null;
+  posicao?: number | null;
+}
+
+export interface Multa {
+  id: number;
+  emprestimo_id: number;
+  utilizador_id: number;
+  dias_atraso: number;
+  valor: number;
+  paga: boolean;
+  data_criacao: string;
+  data_pagamento?: string | null;
+  documento_titulo?: string | null;
+  leitor_nome?: string | null;
+}
+
+export interface ObraMaisRequisitada {
+  documento_id: number;
+  titulo: string;
+  total: number;
+}
+
+export interface RelatorioCirculacao {
+  total_exemplares: number;
+  exemplares_disponiveis: number;
+  emprestimos_activos: number;
+  emprestimos_atrasados: number;
+  reservas_activas: number;
+  multas_por_pagar: number;
+  valor_multas_por_pagar: number;
+  total_emprestimos_historico: number;
+  obras_mais_requisitadas: ObraMaisRequisitada[];
+}

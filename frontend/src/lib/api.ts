@@ -3,8 +3,14 @@
 // páginas não chamem fetch directamente.
 
 import type {
+  Disponibilidade,
   Documento,
+  Emprestimo,
+  Exemplar,
+  Multa,
   Pagina,
+  RelatorioCirculacao,
+  Reserva,
   RespostaSemantica,
   ResultadoPesquisa,
   SeccaoBiblioteca,
@@ -169,4 +175,65 @@ export const api = {
   // Recomendações
   recomendacoes: () =>
     pedir<{ uri: string; titulo: string; motivo: string }[]>("/recommendations"),
+
+  // ---- Circulação (gestão bibliotecária) ----
+  // Leitor
+  disponibilidade: (documentoId: number) =>
+    pedir<Disponibilidade>(`/circulation/documents/${documentoId}/availability`),
+  requisitar: (documentoId: number, utilizadorId?: number) =>
+    pedir<Emprestimo>("/circulation/loans", {
+      method: "POST",
+      body: JSON.stringify({
+        documento_id: documentoId,
+        ...(utilizadorId ? { utilizador_id: utilizadorId } : {}),
+      }),
+    }),
+  meusEmprestimos: () => pedir<Emprestimo[]>("/circulation/loans/me"),
+  renovar: (emprestimoId: number) =>
+    pedir<Emprestimo>(`/circulation/loans/${emprestimoId}/renew`, {
+      method: "POST",
+    }),
+  reservar: (documentoId: number) =>
+    pedir<Reserva>("/circulation/reservations", {
+      method: "POST",
+      body: JSON.stringify({ documento_id: documentoId }),
+    }),
+  minhasReservas: () => pedir<Reserva[]>("/circulation/reservations/me"),
+  cancelarReserva: (reservaId: number) =>
+    pedir<void>(`/circulation/reservations/${reservaId}`, { method: "DELETE" }),
+  minhasMultas: () => pedir<Multa[]>("/circulation/fines/me"),
+
+  // Bibliotecário (administrador)
+  exemplares: (documentoId: number) =>
+    pedir<Exemplar[]>(`/circulation/documents/${documentoId}/copies`),
+  criarExemplares: (
+    documentoId: number,
+    quantidade: number,
+    localizacao?: string,
+  ) =>
+    pedir<Exemplar[]>("/circulation/copies", {
+      method: "POST",
+      body: JSON.stringify({
+        documento_id: documentoId,
+        quantidade,
+        ...(localizacao ? { localizacao } : {}),
+      }),
+    }),
+  todosEmprestimos: (apenasActivos = false) =>
+    pedir<Emprestimo[]>(
+      `/circulation/loans${apenasActivos ? "?apenas_activos=true" : ""}`,
+    ),
+  devolver: (emprestimoId: number) =>
+    pedir<Emprestimo>(`/circulation/loans/${emprestimoId}/return`, {
+      method: "POST",
+    }),
+  todasReservas: () => pedir<Reserva[]>("/circulation/reservations"),
+  todasMultas: (apenasPorPagar = false) =>
+    pedir<Multa[]>(
+      `/circulation/fines${apenasPorPagar ? "?apenas_por_pagar=true" : ""}`,
+    ),
+  pagarMulta: (multaId: number) =>
+    pedir<Multa>(`/circulation/fines/${multaId}/pay`, { method: "POST" }),
+  relatorioCirculacao: () =>
+    pedir<RelatorioCirculacao>("/circulation/report"),
 };

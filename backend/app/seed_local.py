@@ -25,6 +25,15 @@ from app.core.security import hash_password
 from app.core.pdf_livro import txt_para_pdf
 from app.core.storage import caminho_capa, caminho_livro, url_capa
 from app.models.academic import AreaCientifica, Tema
+from app.models.circulacao import (
+    Emprestimo,
+    EstadoEmprestimo,
+    EstadoExemplar,
+    EstadoReserva,
+    Exemplar,
+    Multa,
+    Reserva,
+)
 from app.models.document import Documento, TipoDocumento, NivelAcesso
 from app.models.social import Favorito, Seguidor
 from app.models.user import Utilizador, PerfilUtilizador
@@ -220,5 +229,154 @@ def executar() -> None:
         db.close()
 
 
+def semear_circulacao() -> None:
+    """
+    Popula a CIRCULAÇÃO (exemplares, empréstimos, reservas e multas) com dados
+    de demonstração. É IDEMPOTENTE em duas frentes:
+
+      1. Exemplares: cada documento que ainda não tenha exemplares recebe alguns
+         (assim, novos documentos passam a ter cópias requisitáveis sem mexer nos
+         existentes). Usa-se a numeração `BASI-{doc:04d}-{n:02d}`.
+      2. Movimentos demonstrativos (empréstimos/reservas/multas): só são criados
+         UMA vez — quando ainda não existe nenhum empréstimo na base. Mostram o
+         sistema "vivo": um empréstimo a decorrer, um em atraso (com multa) e uma
+         obra esgotada com lista de espera.
+
+    Esta função é chamada no arranque (bootstrap) a seguir ao seed base, e pode
+    ser executada à parte com `python -m app.seed_local circulacao`.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    init_db()
+    db = SessionLocal()
+    try:
+        documentos = db.query(Documento).order_by(Documento.id).all()
+        if not documentos:
+            print("Sem documentos — circulação ignorada (corra o seed base primeiro).")
+            return
+
+        # --- 1) Exemplares para documentos que ainda não os tenham ---------
+        criados = 0
+        for doc in documentos:
+            ja_tem = db.query(Exemplar).filter(Exemplar.documento_id == doc.id).count()
+            if ja_tem:
+                continue
+            # 2 exemplares por obra (suficiente para demonstrar fila de espera).
+            for n in range(1, 3):
+                db.add(Exemplar(
+                    documento_id=doc.id,
+                    numero_registo=f"BASI-{doc.id:04d}-{n:02d}",
+                    estado=EstadoExemplar.disponivel,
+                    localizacao="Estante Geral",
+                ))
+                criados += 1
+        if criados:
+            db.commit()
+            print(f"Circulação: {criados} exemplares criados.")
+
+        # --- 2) Movimentos demonstrativos (uma única vez) ------------------
+        if db.query(Emprestimo).first() is not None:
+            print("Circulação já tem movimentos — demonstração ignorada.")
+            return
+
+        def _u(email: str):
+            return db.query(Utilizador).filter(Utilizador.email == email).first()
+
+        maria = _u("maria@basi.ao")        # estudante
+        pedro = _u("pedro@basi.ao")        # investigador
+        adriano = _u("adriano@basi.ao")    # professor
+        filipe = _u("filipe@basi.ao")      # professor
+        if not all([maria, pedro, adriano]):
+            print("Utilizadores de demonstração em falta — movimentos ignorados.")
+            return
+
+        agora = datetime.now(timezone.utc)
+
+        def _exemplar_livre(documento_id: int):
+            return (
+                db.query(Exemplar)
+                .filter(
+                    Exemplar.documento_id == documento_id,
+                    Exemplar.estado == EstadoExemplar.disponivel,
+                )
+                .first()
+            )
+
+        def _emprestar(leitor, documento_id, *, dias_decorridos, prazo_dias):
+            ex = _exemplar_livre(documento_id)
+            if ex is None:
+                return None
+            inicio = agora - timedelta(days=dias_decorridos)
+            previsto = inicio + timedelta(days=prazo_dias)
+            atrasado = previsto < agora
+            ex.estado = EstadoExemplar.emprestado
+            emp = Emprestimo(
+                exemplar_id=ex.id,
+                utilizador_id=leitor.id,
+                data_emprestimo=inicio,
+                data_prevista_devolucao=previsto,
+                estado=EstadoEmprestimo.atrasado if atrasado else EstadoEmprestimo.activo,
+            )
+            db.add(emp)
+            db.flush()
+            return emp
+
+        # (a) Empréstimo a decorrer, dentro do prazo (Maria, estudante).
+        _emprestar(maria, documentos[0].id, dias_decorridos=3, prazo_dias=14)
+
+        # (b) Empréstimo EM ATRASO -> gera multa por pagar (Pedro, investigador).
+        em_atraso = _emprestar(pedro, documentos[1].id, dias_decorridos=40, prazo_dias=30)
+        if em_atraso is not None:
+            dias = (agora - _aware(em_atraso.data_prevista_devolucao)).days
+            if dias > 0:
+                db.add(Multa(
+                    emprestimo_id=em_atraso.id,
+                    utilizador_id=em_atraso.utilizador_id,
+                    dias_atraso=dias,
+                    valor=dias * 100.0,  # 100 Kz/dia (ver MULTA_POR_DIA no serviço)
+                    paga=False,
+                ))
+
+        # (c) Obra ESGOTADA com lista de espera: emprestam-se os 2 exemplares e
+        #     ficam reservas em fila.
+        esgotada = documentos[2]
+        _emprestar(adriano, esgotada.id, dias_decorridos=2, prazo_dias=30)
+        _emprestar(filipe or adriano, esgotada.id, dias_decorridos=1, prazo_dias=30)
+        # Maria e Pedro entram na fila de espera dessa obra.
+        db.add(Reserva(
+            documento_id=esgotada.id,
+            utilizador_id=maria.id,
+            data_reserva=agora - timedelta(hours=5),
+            estado=EstadoReserva.activa,
+        ))
+        db.add(Reserva(
+            documento_id=esgotada.id,
+            utilizador_id=pedro.id,
+            data_reserva=agora - timedelta(hours=2),
+            estado=EstadoReserva.activa,
+        ))
+
+        db.commit()
+        print("Circulação: movimentos de demonstração criados "
+              "(1 empréstimo activo, 1 em atraso com multa, 1 obra esgotada com fila).")
+    finally:
+        db.close()
+
+
+def _aware(dt):
+    """Garante que um datetime tem fuso horário (UTC) para comparações seguras."""
+    from datetime import timezone
+
+    if dt is None:
+        return dt
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
 if __name__ == "__main__":
-    executar()
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "circulacao":
+        semear_circulacao()
+    else:
+        executar()
+        semear_circulacao()

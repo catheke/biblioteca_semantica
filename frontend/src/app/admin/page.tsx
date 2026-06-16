@@ -161,10 +161,17 @@ export default function PaginaAdmin() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800">Administração</h1>
-      <p className="mt-1 text-gray-500">
-        Gestão de utilizadores e do catálogo de documentos.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Administração</h1>
+          <p className="mt-1 text-gray-500">
+            Gestão de utilizadores e do catálogo de documentos.
+          </p>
+        </div>
+        <Link href="/admin/circulacao" className="btn-primario py-1.5 text-sm">
+          Circulação (empréstimos e multas)
+        </Link>
+      </div>
 
       {erro && (
         <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
