@@ -98,6 +98,17 @@ const cell = (text, { w, fill, bold = false, align } = {}) =>
 
 // ---------- Capa ----------
 const capa = [
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120, after: 160 },
+    children: [new ImageRun({
+      type: "jpg",
+      data: fs.readFileSync(`${CAP}/logo_umn.jpeg`),
+      transformation: { width: 360, height: 126 },
+      altText: {
+        title: "Universidade Mandume ya Ndemufayo",
+        description: "Logótipo da UMN — Instituto Politécnico da Huíla",
+        name: "logo_umn",
+      },
+    })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 },
     children: [runB("INSTITUTO SUPERIOR POLITÉCNICO DA HUÍLA")] }),
   P("Universidade Mandume ya Ndemufayo", { align: AlignmentType.CENTER }),
