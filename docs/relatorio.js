@@ -442,9 +442,9 @@ const doc = new Document({
   numbering: {
     config: [
       { reference: "lista", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT,
-        style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+        style: { run: { font: "Times New Roman" }, paragraph: { indent: { left: 720, hanging: 360 } } } }] },
       { reference: "numerada", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT,
-        style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+        style: { run: { font: "Times New Roman" }, paragraph: { indent: { left: 720, hanging: 360 } } } }] },
     ],
   },
   sections: [
