@@ -4,7 +4,7 @@
 // automaticamente à pesquisa por significado (temas e subtemas relacionados),
 // para que o utilizador receba sempre resultados úteis.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import type { ResultadoPesquisa } from "@/types";
@@ -19,14 +19,12 @@ export default function PaginaPesquisa() {
     "inicial",
   );
 
-  async function procurar(e: React.FormEvent) {
-    e.preventDefault();
-    const q = termo.trim();
-    if (q.length < 2) return;
+  async function procurar(q: string) {
+    if (q.trim().length < 2) return;
     setEstado("carregando");
     try {
       // 1) Pesquisa textual (rápida, no catálogo).
-      const textuais = await api.pesquisaTextual(q);
+      const textuais = await api.pesquisaTextual(q.trim());
       if (textuais.length > 0) {
         setResultados(textuais);
         setOrigem("texto");
@@ -34,7 +32,7 @@ export default function PaginaPesquisa() {
         return;
       }
       // 2) Sem correspondência textual -> recorre à camada semântica.
-      const semantica = await api.pesquisaSemantica(q);
+      const semantica = await api.pesquisaSemantica(q.trim());
       setResultados(semantica.resultados);
       setOrigem("semantica");
       setEstado("ok");
@@ -42,6 +40,16 @@ export default function PaginaPesquisa() {
       setEstado("erro");
     }
   }
+
+  // Permite ligações directas, ex.: /pesquisa?q=Machine+Learning
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q && q.trim()) {
+      setTermo(q.trim());
+      procurar(q.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -51,7 +59,13 @@ export default function PaginaPesquisa() {
         mostramos obras sobre temas relacionados.
       </p>
 
-      <form onSubmit={procurar} className="mt-6 flex gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          procurar(termo);
+        }}
+        className="mt-6 flex gap-2"
+      >
         <input
           className="campo"
           value={termo}
