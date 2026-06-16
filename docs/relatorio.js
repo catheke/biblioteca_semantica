@@ -281,7 +281,7 @@ const corpo = [
 
   H1("6. Modelação da Ontologia (OWL)"),
   P("A ontologia (ontology/basi.ttl) define a hierarquia de classes Pessoa → Autor → {Professor, Estudante, Investigador}, as subclasses de Documento (Livro, Artigo, Tese, Monografia, Manual, Apresentação, Material Didáctico) e as classes AreaCientifica, Tema, Genero e PalavraChave."),
-  P("As relações entre indivíduos são modeladas como propriedades de objecto, com os axiomas OWL que habilitam a inferência. O excerto seguinte mostra as três propriedades fundamentais — transitiva, simétrica e inversa:"),
+  P("As relações entre indivíduos são modeladas como propriedades de objecto, com os axiomas OWL que habilitam a inferência [2][5]. O excerto seguinte mostra as três propriedades fundamentais — transitiva, simétrica e inversa:"),
   ...code([
     "# Propriedade TRANSITIVA — base da expansão de temas",
     "basi:eSubtemaDe a owl:ObjectProperty, owl:TransitiveProperty ;",
@@ -295,10 +295,10 @@ const corpo = [
     "basi:temAutor a owl:ObjectProperty ;",
     "    owl:inverseOf basi:ehAutorDe .",
   ]),
-  P("A ontologia inclui ainda restrições OWL e classes inferidas: por owl:Restriction exige-se que cada Documento tenha pelo menos um autor (cardinalidade mínima 1); por owl:equivalentClass define-se DocumentoDeIA (qualquer documento cujo tema seja Inteligência Artificial ou um seu subtema) e ProfessorActivo (professor autor de pelo menos um documento). O axioma owl:AllDisjointClasses garante que um documento não pode ser, em simultâneo, Livro e Tese. A CDU é modelada como um skos:ConceptScheme, em que cada secção e género é um skos:Concept."),
+  P("A ontologia inclui ainda restrições OWL e classes inferidas: por owl:Restriction exige-se que cada Documento tenha pelo menos um autor (cardinalidade mínima 1); por owl:equivalentClass define-se DocumentoDeIA (qualquer documento cujo tema seja Inteligência Artificial ou um seu subtema) e ProfessorActivo (professor autor de pelo menos um documento). O axioma owl:AllDisjointClasses garante que um documento não pode ser, em simultâneo, Livro e Tese. A CDU [9] é modelada como um skos:ConceptScheme [4], em que cada secção e género é um skos:Concept."),
 
   H1("7. Base de Conhecimento e Consultas SPARQL"),
-  P("A base de conhecimento (rdf/dados_exemplo.ttl) materializa as instâncias (ABox): áreas científicas, uma hierarquia de temas com três níveis de profundidade, autores, doze documentos técnicos e as relações entre eles (autoria, tema, citações e obras relacionadas). Estes doze documentos formam o núcleo densamente ligado que sustenta a demonstração da inferência; o catálogo completo da aplicação reúne 55 obras (documentos técnicos e literatura de domínio público), todas classificadas pela CDU. No servidor Fuseki em produção estão carregados 493 triplos. O excerto abaixo ilustra como a hierarquia de temas e a classificação de um documento são declaradas em triplos RDF:"),
+  P("A base de conhecimento (rdf/dados_exemplo.ttl) materializa as instâncias (ABox): áreas científicas, uma hierarquia de temas com três níveis de profundidade, autores, doze documentos técnicos e as relações entre eles (autoria, tema, citações e obras relacionadas). Estes doze documentos formam o núcleo densamente ligado que sustenta a demonstração da inferência; o catálogo completo da aplicação reúne 55 obras (documentos técnicos e literatura de domínio público), todas classificadas pela CDU. No servidor Fuseki [6] em produção estão carregados 493 triplos. O excerto abaixo ilustra como a hierarquia de temas e a classificação de um documento são declaradas em triplos RDF [1]:"),
   ...code([
     "basi:Tema_DeepLearning a basi:Tema ;",
     "    basi:nome \"Deep Learning\" ;",
@@ -309,7 +309,7 @@ const corpo = [
     "    basi:temTema basi:Tema_DeepLearning ;",
     "    basi:temAutor rec:pessoa/adriano .",
   ]),
-  P("A consulta-chave da pesquisa semântica usa um caminho de propriedade transitivo (eSubtemaDe*) para percorrer toda a sub-árvore de um tema e devolver os documentos a ele ligados, mesmo que o título não contenha a palavra pesquisada:"),
+  P("A consulta-chave da pesquisa semântica usa um caminho de propriedade transitivo (eSubtemaDe*) do SPARQL [3] para percorrer toda a sub-árvore de um tema e devolver os documentos a ele ligados, mesmo que o título não contenha a palavra pesquisada:"),
   ...code([
     "SELECT DISTINCT ?titulo WHERE {",
     "  ?temaRaiz basi:nome \"Inteligência Artificial\" .",
@@ -357,10 +357,10 @@ const corpo = [
         cell("Camada", { w: 3000, fill: "2E75B6", bold: true }),
         cell("Tecnologias", { w: 6360, fill: "2E75B6", bold: true }),
       ] }),
-      new TableRow({ children: [ cell("Frontend", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Next.js 14 (App Router), React, TypeScript, TailwindCSS", { w: 6360 }) ] }),
-      new TableRow({ children: [ cell("Backend", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Python, FastAPI, Pydantic, SQLAlchemy 2.0", { w: 6360 }) ] }),
+      new TableRow({ children: [ cell("Frontend", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Next.js 14 (App Router), React, TypeScript, TailwindCSS [8]", { w: 6360 }) ] }),
+      new TableRow({ children: [ cell("Backend", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Python, FastAPI, Pydantic, SQLAlchemy 2.0 [7]", { w: 6360 }) ] }),
       new TableRow({ children: [ cell("Dados relacionais", { w: 3000, bold: true, fill: "EAF1FB" }), cell("PostgreSQL (SQLite em ambiente local)", { w: 6360 }) ] }),
-      new TableRow({ children: [ cell("Web Semântica", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Apache Jena Fuseki, rdflib, RDF, RDFS, OWL, SPARQL, SKOS", { w: 6360 }) ] }),
+      new TableRow({ children: [ cell("Web Semântica", { w: 3000, bold: true, fill: "EAF1FB" }), cell("Apache Jena Fuseki [6], rdflib, RDF, RDFS, OWL, SPARQL, SKOS", { w: 6360 }) ] }),
       new TableRow({ children: [ cell("Ficheiros", { w: 3000, bold: true, fill: "EAF1FB" }), cell("MinIO (armazenamento de objectos)", { w: 6360 }) ] }),
       new TableRow({ children: [ cell("Segurança", { w: 3000, bold: true, fill: "EAF1FB" }), cell("JWT, bcrypt, RBAC", { w: 6360 }) ] }),
     ],
@@ -369,9 +369,9 @@ const corpo = [
 
   H1("10. Implementação"),
   H2("10.1 Backend"),
-  P("O backend, em FastAPI, está organizado em camadas (api/, services/, repositories/, models/, schemas/). O ServicoSemantico constrói e executa consultas SPARQL contra o Fuseki, com degradação graciosa: se o Fuseki estiver indisponível, recorre a um grafo rdflib em memória, mantendo a API a responder. O ServicoRecomendacoes combina sinais de conteúdo e de grafo. A documentação OpenAPI é gerada automaticamente em /docs."),
+  P("O backend, em FastAPI [7], está organizado em camadas (api/, services/, repositories/, models/, schemas/). O ServicoSemantico constrói e executa consultas SPARQL [3] contra o Fuseki [6], com degradação graciosa: se o Fuseki estiver indisponível, recorre a um grafo rdflib em memória, mantendo a API a responder. O ServicoRecomendacoes combina sinais de conteúdo e de grafo. A documentação OpenAPI é gerada automaticamente em /docs."),
   H2("10.2 Frontend"),
-  P("O frontend, em Next.js 14 com TypeScript e TailwindCSS, concentra as chamadas num cliente HTTP central (lib/api.ts) que gere os tokens; o contexto de autenticação (lib/auth.tsx) protege as rotas. A página de destaque é a de pesquisa semântica, que mostra os termos expandidos para tornar a inferência transparente ao utilizador. A biblioteca é apresentada por secções da CDU, à semelhança das estantes de uma biblioteca física."),
+  P("O frontend, em Next.js 14 [8] com TypeScript e TailwindCSS, concentra as chamadas num cliente HTTP central (lib/api.ts) que gere os tokens; o contexto de autenticação (lib/auth.tsx) protege as rotas. A página de destaque é a de pesquisa semântica, que mostra os termos expandidos para tornar a inferência transparente ao utilizador. A biblioteca é apresentada por secções da CDU [9], à semelhança das estantes de uma biblioteca física."),
   H2("10.3 Segurança"),
   bullet("Palavras-passe guardadas apenas como hash bcrypt (com sal)."),
   bullet("Autenticação JWT sem estado: token de acesso (30 min) e token de renovação (7 dias)."),
